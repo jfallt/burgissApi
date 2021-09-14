@@ -45,3 +45,4 @@ burgissSession.request('analyticsGroupingFields', analyticsApi=True, profileIdAs
 - [Burgiss API Documentation](https://api.burgiss.com/v2/docs/index.html)
 - [Burgiss Analytics API Documentation](https://api-analytics.burgiss.com/swagger/index.html)
 - [Burgiss API Token Auth Documentation](https://burgiss.docsend.com/view/fcqygcx)
+- [Pypi Package](https://pypi.org/project/burgiss-api/)
