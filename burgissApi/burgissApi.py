@@ -14,7 +14,7 @@ from OpenSSL import crypto
 # Create logging file for debugging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-logging.basicConfig(filename='burgissApi.log',
+    logging.basicConfig(filename='burgissApi.log',
                     encoding='utf-8', level=logging.DEBUG,
                     format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger = logging.getLogger('burgissApi')
