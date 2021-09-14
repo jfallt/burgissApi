@@ -12,6 +12,14 @@ The class burgissApiAuth handles all the JWT token authentication but there are 
 1. Add your clientID, user/email and password
 1. Put your private key in the working directory, name it private.pem
 
+## Installation
+1. Creating a virtual environment is suggested
+1. Download requirements.txt
+```
+pip install -r requirements.txt 
+pip install burgiss-api
+```
+
 ## Usage
 ```python
 from burgissApi import burgissApiSession
@@ -37,4 +45,3 @@ burgissSession.request('analyticsGroupingFields', analyticsApi=True, profileIdAs
 - [Burgiss API Documentation](https://api.burgiss.com/v2/docs/index.html)
 - [Burgiss Analytics API Documentation](https://api-analytics.burgiss.com/swagger/index.html)
 - [Burgiss API Token Auth Documentation](https://burgiss.docsend.com/view/fcqygcx)
-- [Wikipedia: Markdown](http://wikipedia.org/wiki/Markdown)
