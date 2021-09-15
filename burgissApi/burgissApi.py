@@ -1,4 +1,5 @@
 import configparser
+import json
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -9,14 +10,12 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from OpenSSL import crypto
 
-
-
 # Create logging file for debugging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
     logging.basicConfig(filename='burgissApi.log',
-                    encoding='utf-8', level=logging.DEBUG,
-                    format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+                        encoding='utf-8', level=logging.DEBUG,
+                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger = logging.getLogger('burgissApi')
 filehandler_dbg = logging.FileHandler(logger.name + '.log', mode='w')
 
@@ -229,3 +228,26 @@ class burgissApiSession(burgissApiInit):
             endpoint, analyticsApi, requestType, profileIdHeader)
 
         return responseCodeHandling(response)
+
+
+def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy):
+    """
+    Simplify nested json input for point in time analysis
+    """
+    # Add start and end date references to global measure and measure params
+    globalMeasureParameters['measureStartDateReference'] = measureStartDateReference
+    globalMeasureParameters['measureEndDateReference'] = measureEndDateReference
+    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
+
+    measures['measureStartDateReference'] = measureStartDateReference
+    measures['measureEndDateReference'] = measureEndDateReference
+    measuresFormatted = {"measures": [measures]}
+
+    analysisParameters['measures'] = measuresFormatted
+
+    # Create final json
+    pointInTimeAnalyis = {"pointInTimeAnalysis": [analysisParameters]}
+    pointInTimeAnalyis['dataCriteria'] = [dataCriteria]
+    pointInTimeAnalyis['groupBy'] = groupBy
+
+    return json.dumps(pointInTimeAnalyis)
