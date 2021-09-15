@@ -140,7 +140,7 @@ class burgissApiInit(burgissApiAuth):
         self.urlApi = self.auth.urlApi
         self.analyticsUrlApi = self.auth.analyticsUrlApi
 
-    def request(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False):
+    def request(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False, data=''):
         """
         Burgiss api request call, handling bearer token auth in the header with token received when class initializes
 
@@ -177,8 +177,12 @@ class burgissApiInit(burgissApiAuth):
                 'Authorization': 'Bearer ' + self.token,
             }
 
-        response = requests.request(
-            requestType, baseUrl + url, headers=headers)
+        if len(data) > 0:
+            response = requests.request(
+                requestType, baseUrl + url, headers=headers, data=data)
+        else:
+            response = requests.request(
+                requestType, baseUrl + url, headers=headers)
 
         return responseCodeHandling(response)
 
@@ -196,7 +200,7 @@ class burgissApiSession(burgissApiInit):
         self.profileId = self.session.request(
             'profiles').json()[0]['profileID']
 
-    def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET'):
+    def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET', data=''):
         """
         Basic request, built on top of burgissApiInit.request, which handles urls and token auth
 
@@ -225,7 +229,7 @@ class burgissApiSession(burgissApiInit):
         endpoint = url + profileUrl + optionalParameters
 
         response = self.session.request(
-            endpoint, analyticsApi, requestType, profileIdHeader)
+            endpoint, analyticsApi, requestType, profileIdHeader, data)
 
         return responseCodeHandling(response)
 
@@ -237,13 +241,12 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
     # Add start and end date references to global measure and measure params
     globalMeasureParameters['measureStartDateReference'] = measureStartDateReference
     globalMeasureParameters['measureEndDateReference'] = measureEndDateReference
-    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
-
     measures['measureStartDateReference'] = measureStartDateReference
     measures['measureEndDateReference'] = measureEndDateReference
-    measuresFormatted = {"measures": [measures]}
 
-    analysisParameters['measures'] = measuresFormatted
+    # Nest global measure parameters and measures
+    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
+    analysisParameters['measures'] = [measures]
 
     # Create final json
     pointInTimeAnalyis = {"pointInTimeAnalysis": [analysisParameters]}
