@@ -229,8 +229,3 @@ class burgissApiSession(burgissApiInit):
             endpoint, analyticsApi, requestType, profileIdHeader)
 
         return responseCodeHandling(response)
-
-
-def parseResponse(response):
-    [[print(key, ":", value) for key, value in response[index].items()]
-     for index in range(len(response))]
