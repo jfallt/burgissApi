@@ -255,7 +255,7 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
 
     return json.dumps(pointInTimeAnalyis)
 
-def BurgissGetData(field, useLookupData=False, useOptionalParameters=False):
+def BurgissGetData(field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
     """
     Basic api request and tabular transformation
 
@@ -313,7 +313,7 @@ def BurgissGetData(field, useLookupData=False, useOptionalParameters=False):
 
     return pandasTable
 
-def GetTransactionValues(id, field):
+def GetTransactionValues(id: int, field: str):
     """
     Basic api request for values in 'transaction' model
 
