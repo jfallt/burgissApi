@@ -254,3 +254,80 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
     pointInTimeAnalyis['groupBy'] = groupBy
 
     return json.dumps(pointInTimeAnalyis)
+
+def BurgissGetData(field, useLookupData=False, useOptionalParameters=False):
+    """
+    Basic api request and tabular transformation
+
+    Args:
+        field (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
+            - Can also refer to available fields in 'LookupData' model if useLookupData=True
+            - Refer to API docs for specifics
+        useLookupData (str, optional): Set to true if using data from 'LookupData' model. Defaults to False.
+        useOptionalParameters (str, optional): Certain endpoints have additional settings (i.e. Investments has the following:
+            &includeInvestmentNotes=false
+            &includeCommitmentHistory=false
+            &includeInvestmentLiquidationNotes=false)
+
+    Returns:
+        Pandas DataFrame [object]: Data from 'get' request transformed into relational dataframe
+
+    """
+    burgissSession = burgissApiSession()
+
+    if useLookupData == True:
+        resp = burgissSession.request(
+            'LookupData', optionalParameters=useOptionalParameters)
+        assert resp.status_code == 200
+        respJson = resp.json()['lookupData']
+        lookupData = pd.json_normalize(respJson)
+        normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
+        fieldData = normalizedLookupData.loc[normalizedLookupData['field']
+                                             == field, 'lookup'].values[0]
+        pandasTable = pd.json_normalize(fieldData)
+
+    else:
+
+        if (field == 'orgs'):
+            resp = burgissSession.request(
+                field, optionalParameters=useOptionalParameters)
+            assert resp.status_code == 200
+            respJson = resp.json()
+            pandasTable = pd.json_normalize(respJson)
+
+        else:
+            resp = burgissSession.request(
+                field, optionalParameters=useOptionalParameters)
+            assert resp.status_code == 200
+            respJson = resp.json()[field]
+            pandasTable = pd.json_normalize(respJson)
+
+    # Removes column name prefix from unnested columns
+    columnList = []
+
+    for column in pandasTable.columns:
+        if '.' in column:
+            column = column.split('.', 1)[1]
+        columnList.append(column)
+    pandasTable.columns = columnList
+
+    return pandasTable
+
+def GetTransactionValues(id, field):
+    """
+    Basic api request for values in 'transaction' model
+
+    Args:
+        id (int): refers to investmentID
+        field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding') -> Gets list of values for indicated investmentID
+
+    Returns:
+        json [object]: dictionary of specified field's values for investmentID
+
+    """
+    url = f'investments/{id}/transactions/{field}'
+    burgissSession = burgissApiSession()
+    resp = burgissSession.request(url=url)
+    assert resp.status_code == 200
+    respJson = resp.json()
+    return respJson
