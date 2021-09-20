@@ -201,8 +201,9 @@ class burgissApiSession(burgissApiInit):
         config.read_file(open('config.cfg'))
         self.profileIdType = config.get('API', 'profileIdType')
         self.session = burgissApiInit()
-        self.profileId = self.session.request(
-            'profiles').json()[0][self.profileIdType]
+        self.profileResponse = self.session.request(
+            'profiles').json()
+        self.profileId = self.profileResponse[0][self.profileIdType]
 
     def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET', data=''):
         """
@@ -238,12 +239,12 @@ class burgissApiSession(burgissApiInit):
         return responseCodeHandling(response)
 
 
-class burgissApi(burgissApiSession):
+class burgissApi():
     def __init__(self):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
-        self.session = burgissApiSession()
+        self.apiSession = burgissApiSession()
 
     def getData(self, field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
         """
@@ -263,7 +264,7 @@ class burgissApi(burgissApiSession):
             Pandas DataFrame [object]: Data from 'get' request transformed into relational dataframe
 
         """
-        resp = self.session.request(
+        resp = self.apiSession.request(
             field, optionalParameters=useOptionalParameters)
 
         # Conditional JSON parsing
@@ -304,7 +305,7 @@ class burgissApi(burgissApiSession):
 
         """
         url = f'investments/{id}/transactions/{field}'
-        resp = self.session.request(url=url)
+        resp = self.apiSession.request(url=url)
         respJson = resp.json()
         return respJson
 
