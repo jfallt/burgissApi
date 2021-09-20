@@ -235,28 +235,6 @@ class burgissApiSession(burgissApiInit):
         return responseCodeHandling(response)
 
 
-def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy):
-    """
-    Simplify nested json input for point in time analysis
-    """
-    # Add start and end date references to global measure and measure params
-    globalMeasureParameters['measureStartDateReference'] = measureStartDateReference
-    globalMeasureParameters['measureEndDateReference'] = measureEndDateReference
-    measures['measureStartDateReference'] = measureStartDateReference
-    measures['measureEndDateReference'] = measureEndDateReference
-
-    # Nest global measure parameters and measures
-    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
-    analysisParameters['measures'] = [measures]
-
-    # Create final json
-    pointInTimeAnalyis = {"pointInTimeAnalysis": [analysisParameters]}
-    pointInTimeAnalyis['dataCriteria'] = [dataCriteria]
-    pointInTimeAnalyis['groupBy'] = groupBy
-
-    return json.dumps(pointInTimeAnalyis)
-
-
 class burgissApi(burgissApiSession):
     def __init__(self):
         """
@@ -326,3 +304,25 @@ class burgissApi(burgissApiSession):
         resp = self.session.request(url=url)
         respJson = resp.json()
         return respJson
+
+
+def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy):
+    """
+    Simplify nested json input for point in time analysis
+    """
+    # Add start and end date references to global measure and measure params
+    globalMeasureParameters['measureStartDateReference'] = measureStartDateReference
+    globalMeasureParameters['measureEndDateReference'] = measureEndDateReference
+    measures['measureStartDateReference'] = measureStartDateReference
+    measures['measureEndDateReference'] = measureEndDateReference
+
+    # Nest global measure parameters and measures
+    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
+    analysisParameters['measures'] = [measures]
+
+    # Create final json
+    pointInTimeAnalyis = {"pointInTimeAnalysis": [analysisParameters]}
+    pointInTimeAnalyis['dataCriteria'] = [dataCriteria]
+    pointInTimeAnalyis['groupBy'] = groupBy
+
+    return json.dumps(pointInTimeAnalyis)
