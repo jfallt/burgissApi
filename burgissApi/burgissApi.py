@@ -197,9 +197,12 @@ class burgissApiSession(burgissApiInit):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
+        config = configparser.ConfigParser()
+        config.read_file(open('config.cfg'))
+        self.profileIdType = config.get('API', 'profileIdType')
         self.session = burgissApiInit()
         self.profileId = self.session.request(
-            'profiles').json()[0]['profileID']
+            'profiles').json()[0][self.profileIdType]
 
     def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET', data=''):
         """
@@ -261,7 +264,7 @@ class burgissApi(burgissApiSession):
 
         """
         resp = self.session.request(
-            'LookupData', optionalParameters=useOptionalParameters)
+            field, optionalParameters=useOptionalParameters)
 
         # Conditional JSON parsing
         if useLookupData == True:
