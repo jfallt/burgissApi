@@ -39,6 +39,29 @@ lookUpValues = burgissSession.request('LookupValues', profileIdAsHeader=True)
 investments = burgissSession.request('investments', optionalParameters='&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
 ```
 
+## Transformed Data Requests
+Some endpoints are supported for transformation to a dataframe instead of a raw json
+
+```python
+from burgissApi import burgissApi
+
+# Very similar syntax to above
+apiSession = burgissApi()
+orgs = apiSession.getData('orgs')
+```
+
+<details>
+<summary>Supported Endpoints</summary>
+
+|Field|
+| -------|
+|investments|
+|LookupData|
+|orgs|
+|portfolios|
+</details>
+
+
 ## Analytics API
 ```python
 from burgissApi import burgissApiSession
@@ -49,7 +72,9 @@ burgissSession = burgissApiSession()
 burgissSession.request('analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
 ```
 
-Supported Calcs
+<details>
+<summary>Supported Calcs</summary>
+
 |Measure Name| Is Supported for Pooled calculations|
 | --------  | ------------------- |
 |IRR|Yes|
@@ -88,7 +113,7 @@ Supported Calcs
 |Stock.Cost|Yes|
 |Stock.RecallableCapital|Yes|
 |Stock.ReturnOfCapital|Yes|
-
+</details>
 
 ## References
 
