@@ -329,6 +329,5 @@ def getTransactionValues(id: int, field: str):
     url = f'investments/{id}/transactions/{field}'
     burgissSession = burgissApiSession()
     resp = burgissSession.request(url=url)
-    assert resp.status_code == 200
     respJson = resp.json()
     return respJson
