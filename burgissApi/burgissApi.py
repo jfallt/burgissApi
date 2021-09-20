@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import jwt
+import pandas as pd
 import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -255,7 +256,8 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
 
     return json.dumps(pointInTimeAnalyis)
 
-def BurgissGetData(field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
+
+def burgissGetData(field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
     """
     Basic api request and tabular transformation
 
@@ -287,14 +289,12 @@ def BurgissGetData(field: str, useLookupData: bool = False, useOptionalParameter
         pandasTable = pd.json_normalize(fieldData)
 
     else:
-
         if (field == 'orgs'):
             resp = burgissSession.request(
                 field, optionalParameters=useOptionalParameters)
             assert resp.status_code == 200
             respJson = resp.json()
             pandasTable = pd.json_normalize(respJson)
-
         else:
             resp = burgissSession.request(
                 field, optionalParameters=useOptionalParameters)
@@ -313,7 +313,8 @@ def BurgissGetData(field: str, useLookupData: bool = False, useOptionalParameter
 
     return pandasTable
 
-def GetTransactionValues(id: int, field: str):
+
+def getTransactionValues(id: int, field: str):
     """
     Basic api request for values in 'transaction' model
 
