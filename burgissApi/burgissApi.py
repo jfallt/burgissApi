@@ -257,68 +257,72 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
     return json.dumps(pointInTimeAnalyis)
 
 
-def burgissGetData(field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
-    """
-    Basic api request and tabular transformation
+class burgissApi(burgissApiSession):
+    def __init__(self):
+        """
+        Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
+        """
+        self.session = burgissApiSession()
 
-    Args:
-        field (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
-            - Can also refer to available fields in 'LookupData' model if useLookupData=True
-            - Refer to API docs for specifics
-        useLookupData (str, optional): Set to true if using data from 'LookupData' model. Defaults to False.
-        useOptionalParameters (str, optional): Certain endpoints have additional settings (i.e. Investments has the following:
-            &includeInvestmentNotes=false
-            &includeCommitmentHistory=false
-            &includeInvestmentLiquidationNotes=false)
+    def getData(self, field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
+        """
+        Basic api request and tabular transformation
 
-    Returns:
-        Pandas DataFrame [object]: Data from 'get' request transformed into relational dataframe
+        Args:
+            field (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
+                - Can also refer to available fields in 'LookupData' model if useLookupData=True
+                - Refer to API docs for specifics
+            useLookupData (str, optional): Set to true if using data from 'LookupData' model. Defaults to False.
+            useOptionalParameters (str, optional): Certain endpoints have additional settings (i.e. Investments has the following:
+                &includeInvestmentNotes=false
+                &includeCommitmentHistory=false
+                &includeInvestmentLiquidationNotes=false)
 
-    """
-    burgissSession = burgissApiSession()
-    resp = burgissSession.request(
-        'LookupData', optionalParameters=useOptionalParameters)
+        Returns:
+            Pandas DataFrame [object]: Data from 'get' request transformed into relational dataframe
 
-    # Conditional JSON parsing
-    if useLookupData == True:
-        lookupDataJson = resp.json()['lookupData']
-        lookupData = pd.json_normalize(lookupDataJson)
-        normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
-        respJson = normalizedLookupData.loc[normalizedLookupData['field']
-                                             == field, 'lookup'].values[0]
-    else:
-        if (field == 'orgs'):
-            respJson = resp.json()
+        """
+        resp = self.session.request(
+            'LookupData', optionalParameters=useOptionalParameters)
+
+        # Conditional JSON parsing
+        if useLookupData == True:
+            lookupDataJson = resp.json()['lookupData']
+            lookupData = pd.json_normalize(lookupDataJson)
+            normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
+            respJson = normalizedLookupData.loc[normalizedLookupData['field']
+                                                == field, 'lookup'].values[0]
         else:
-            respJson = resp.json()[field]
-    pandasTable = pd.json_normalize(respJson)
+            if (field == 'orgs'):
+                respJson = resp.json()
+            else:
+                respJson = resp.json()[field]
+        pandasTable = pd.json_normalize(respJson)
 
-    # Removes column name prefix from unnested columns
-    columnList = []
+        # Removes column name prefix from unnested columns
+        columnList = []
 
-    for column in pandasTable.columns:
-        if '.' in column:
-            column = column.split('.', 1)[1]
-        columnList.append(column)
-    pandasTable.columns = columnList
+        for column in pandasTable.columns:
+            if '.' in column:
+                column = column.split('.', 1)[1]
+            columnList.append(column)
+        pandasTable.columns = columnList
 
-    return pandasTable
+        return pandasTable
 
+    def getTransactions(self, id: int, field: str):
+        """
+        Basic api request for values in 'transaction' model
 
-def getTransactionValues(id: int, field: str):
-    """
-    Basic api request for values in 'transaction' model
+        Args:
+            id (int): refers to investmentID
+            field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding') -> Gets list of values for indicated investmentID
 
-    Args:
-        id (int): refers to investmentID
-        field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding') -> Gets list of values for indicated investmentID
+        Returns:
+            json [object]: dictionary of specified field's values for investmentID
 
-    Returns:
-        json [object]: dictionary of specified field's values for investmentID
-
-    """
-    url = f'investments/{id}/transactions/{field}'
-    burgissSession = burgissApiSession()
-    resp = burgissSession.request(url=url)
-    respJson = resp.json()
-    return respJson
+        """
+        url = f'investments/{id}/transactions/{field}'
+        resp = self.session.request(url=url)
+        respJson = resp.json()
+        return respJson
