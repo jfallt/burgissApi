@@ -39,6 +39,11 @@ def responseCodeHandling(response):
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
 
+def lowerDictKeys(d):
+    newDict = dict((k.lower(), v) for k, v in d.items())
+    return newDict
+
+
 class burgissApiAuth:
     """
     Create and send a signed client token to receive a bearer token from the burgiss api endpoint
@@ -246,15 +251,37 @@ class burgissApi():
         """
         self.apiSession = burgissApiSession()
 
-    def getData(self, field: str, useLookupData: bool = False, useOptionalParameters: str = ''):
+    def parseLookupValues(self, responseJson):
+        """
+        Custom json parser for the lookupValues response
+
+        Args:
+            responseJson (dict): output from get request on the lookupValues endpoint
+
+        Returns:
+            Pandas DataFrame [object]
+
+        """
+        results = pd.DataFrame(columns=['id', 'value', 'field'])
+
+        for key, value in responseJson.items():
+            dict = {key: [value]}
+            dfTransformed = pd.json_normalize(dict, record_path=[key]).T
+            dfTransformed.reset_index(inplace=True)
+            dfTransformed = dfTransformed.rename(
+                columns={'index': 'id', 0: 'value'})
+            dfTransformed['field'] = key
+            results = results.append(dfTransformed, ignore_index=True)
+
+        return results
+
+    def getData(self, field: str, profileIdAsHeader: bool = False, OptionalParameters: str = ''):
         """
         Basic api request and tabular transformation
 
         Args:
             field (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
-                - Can also refer to available fields in 'LookupData' model if useLookupData=True
                 - Refer to API docs for specifics
-            useLookupData (str, optional): Set to true if using data from 'LookupData' model. Defaults to False.
             useOptionalParameters (str, optional): Certain endpoints have additional settings (i.e. Investments has the following:
                 &includeInvestmentNotes=false
                 &includeCommitmentHistory=false
@@ -265,23 +292,41 @@ class burgissApi():
 
         """
         resp = self.apiSession.request(
-            field, optionalParameters=useOptionalParameters)
+            field, profileIdAsHeader=profileIdAsHeader, optionalParameters=OptionalParameters)
+
+        respJson = resp.json()
+
+        nestedExceptions = {'LookupData':
+                            {'method': 'json_normalize',
+                             'data': 'fields',
+                             'recordPath': 'lookup',
+                             'meta': 'field'},
+                            'LookupValues':
+                                {'method': 'parseLookupValues'}
+                            }
 
         # Conditional JSON parsing
-        if useLookupData == True:
-            lookupDataJson = resp.json()['lookupData']
-            lookupData = pd.json_normalize(lookupDataJson)
-            normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
-            respJson = normalizedLookupData.loc[normalizedLookupData['field']
-                                                == field, 'lookup'].values[0]
-        else:
-            if (field == 'orgs'):
-                respJson = resp.json()
+        if isinstance(respJson, list):
+            pandasTable = pd.json_normalize(respJson)
+        elif isinstance(respJson, dict):
+            respJsonLower = lowerDictKeys(respJson)
+
+            if list(respJsonLower)[0] == field.lower():
+                respJsonLower = respJsonLower[field.lower()]
+
+            if field in nestedExceptions.keys():
+                parameters = nestedExceptions[field]
+
+                if parameters['method'] == 'json_normalize':
+                    pandasTable = pd.json_normalize(
+                        respJsonLower[parameters['data']], record_path=parameters['recordPath'], meta=parameters['meta'])
+                elif parameters['method'] == 'parseLookupValues':
+                    pandasTable = self.parseLookupValues(respJsonLower)
             else:
-                respJson = resp.json()[field]
-        pandasTable = pd.json_normalize(respJson)
+                pandasTable = pd.json_normalize(respJsonLower)
 
         # Removes column name prefix from unnested columns
+        # Is this necessary anymore?
         columnList = []
 
         for column in pandasTable.columns:
@@ -306,8 +351,7 @@ class burgissApi():
         """
         url = f'investments/{id}/transactions/{field}'
         resp = self.apiSession.request(url=url)
-        respJson = resp.json()
-        return respJson
+        return resp.json()
 
 
 def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy):
