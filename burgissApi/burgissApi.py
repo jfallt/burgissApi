@@ -276,29 +276,22 @@ def burgissGetData(field: str, useLookupData: bool = False, useOptionalParameter
 
     """
     burgissSession = burgissApiSession()
+    resp = burgissSession.request(
+        'LookupData', optionalParameters=useOptionalParameters)
 
+    # Conditional JSON parsing
     if useLookupData == True:
-        resp = burgissSession.request(
-            'LookupData', optionalParameters=useOptionalParameters)
-        assert resp.status_code == 200
         respJson = resp.json()['lookupData']
         lookupData = pd.json_normalize(respJson)
         normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
         fieldData = normalizedLookupData.loc[normalizedLookupData['field']
                                              == field, 'lookup'].values[0]
         pandasTable = pd.json_normalize(fieldData)
-
     else:
         if (field == 'orgs'):
-            resp = burgissSession.request(
-                field, optionalParameters=useOptionalParameters)
-            assert resp.status_code == 200
             respJson = resp.json()
             pandasTable = pd.json_normalize(respJson)
         else:
-            resp = burgissSession.request(
-                field, optionalParameters=useOptionalParameters)
-            assert resp.status_code == 200
             respJson = resp.json()[field]
             pandasTable = pd.json_normalize(respJson)
 
