@@ -281,19 +281,17 @@ def burgissGetData(field: str, useLookupData: bool = False, useOptionalParameter
 
     # Conditional JSON parsing
     if useLookupData == True:
-        respJson = resp.json()['lookupData']
-        lookupData = pd.json_normalize(respJson)
+        lookupDataJson = resp.json()['lookupData']
+        lookupData = pd.json_normalize(lookupDataJson)
         normalizedLookupData = pd.json_normalize(lookupData.iloc[0, 0])
-        fieldData = normalizedLookupData.loc[normalizedLookupData['field']
+        respJson = normalizedLookupData.loc[normalizedLookupData['field']
                                              == field, 'lookup'].values[0]
-        pandasTable = pd.json_normalize(fieldData)
     else:
         if (field == 'orgs'):
             respJson = resp.json()
-            pandasTable = pd.json_normalize(respJson)
         else:
             respJson = resp.json()[field]
-            pandasTable = pd.json_normalize(respJson)
+    pandasTable = pd.json_normalize(respJson)
 
     # Removes column name prefix from unnested columns
     columnList = []
