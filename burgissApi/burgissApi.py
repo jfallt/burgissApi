@@ -262,18 +262,15 @@ class burgissApi():
             Pandas DataFrame [object]
 
         """
-        results = pd.DataFrame(columns=['id', 'value', 'field'])
+        jsonReshaped = {key: responseJson[key] for key in responseJson.keys()}
+        
+        dfTransformed = pd.json_normalize(
+            jsonReshaped, max_level=0).T.reset_index()
+        
+        dfTransformed = dfTransformed.rename(
+            columns={'index':'field', 0:'value'})
 
-        for key, value in responseJson.items():
-            dict = {key: [value]}
-            dfTransformed = pd.json_normalize(dict, record_path=[key]).T
-            dfTransformed.reset_index(inplace=True)
-            dfTransformed = dfTransformed.rename(
-                columns={'index': 'id', 0: 'value'})
-            dfTransformed['field'] = key
-            results = results.append(dfTransformed, ignore_index=True)
-
-        return results
+        return dfTransformed
 
     def getData(self, field: str, profileIdAsHeader: bool = False, OptionalParameters: str = ''):
         """
