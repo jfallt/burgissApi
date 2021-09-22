@@ -32,7 +32,7 @@ burgissSession = burgissApiSession()
 # Basic Request Syntax (Defaults to get)
 orgs = burgissSession.request('orgs')
 
-# Specifying profile as a header (instead of the request url)
+# Specifying profile as a header (instead of the request url), this occurs for a few of the requests
 lookUpValues = burgissSession.request('LookupValues', profileIdAsHeader=True)
 
 # Optional Parameters
@@ -40,7 +40,7 @@ investments = burgissSession.request('investments', optionalParameters='&include
 ```
 
 ## Transformed Data Requests
-Some endpoints are supported for transformation to a dataframe instead of a raw json
+Some endpoints are supported for transformation to a flattened dataframe instead of a raw json
 
 ```python
 from burgissApi import burgissApi
@@ -56,9 +56,10 @@ orgs = apiSession.getData('orgs')
 |Field|
 | -------|
 |investments|
-|LookupData|
 |orgs|
 |portfolios|
+|LookupData|
+|LookupValues|
 </details>
 
 
