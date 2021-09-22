@@ -250,25 +250,69 @@ class burgissApi():
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
         self.apiSession = burgissApiSession()
+        # storing exceptions here for now until we can determine a better way to handle them
+        self.nestedExceptions = {'LookupData':
+                                 {'method': 'json_normalize',
+                                  'data': 'fields',
+                                  'recordPath': 'lookup',
+                                  'meta': 'field'},
+                                 'nestedJson':
+                                 {'method': 'parseLookupValues'}
+                                 }
 
-    def parseLookupValues(self, responseJson):
+    def parseNestedJson(self, responseJson):
         """
-        Custom json parser for the lookupValues response
+        Custom nested json parser
 
         Args:
-            responseJson (dict): output from get request on the lookupValues endpoint
+            responseJson (dict)
 
         Returns:
             Pandas DataFrame [object]
 
         """
         dfTransformed = pd.json_normalize(responseJson).T.reset_index()
-        
-        dfTransformed[['field', 'id']] = dfTransformed['index'].str.split('.', expand=True)
-        
+        dfTransformed[['field', 'id']] = dfTransformed['index'].str.split(
+            '.', expand=True)
         dfTransformed = dfTransformed.rename(columns={0: 'value'})
 
         return dfTransformed
+
+    def flattenResponse(self, resp, field):
+        """
+        The api sends a variety of responses, this function determines which parsing method to use based on the response
+        """
+        if isinstance(resp, list):
+            flatDf = pd.json_normalize(resp)
+        elif isinstance(resp, dict):
+            respLower = lowerDictKeys(resp)
+
+            if list(respLower)[0] == field.lower():
+                respLower = respLower[field.lower()]
+
+            if field in self.nestedExceptions.keys():
+                parameters = self.nestedExceptions[field]
+                if parameters['method'] == 'json_normalize':
+                    flatDf = pd.json_normalize(
+                        respLower[parameters['data']], record_path=parameters['recordPath'], meta=parameters['meta'])
+                elif parameters['method'] == 'nestedJson':
+                    flatDf = self.parseNestedJson(respLower)
+            else:
+                flatDf = pd.json_normalize(respLower)
+        return flatDf
+
+    def columnNameClean(df):
+        """
+        Removes column name prefix from unnested columns
+        """
+        columnList = []
+
+        for column in df.columns:
+            if '.' in column:
+                column = column.split('.', 1)[1]
+            columnList.append(column)
+        df.columns = columnList
+        return df
 
     def getData(self, field: str, profileIdAsHeader: bool = False, OptionalParameters: str = ''):
         """
@@ -287,50 +331,13 @@ class burgissApi():
 
         """
         resp = self.apiSession.request(
-            field, profileIdAsHeader=profileIdAsHeader, optionalParameters=OptionalParameters)
+            field, profileIdAsHeader=profileIdAsHeader, optionalParameters=OptionalParameters).json()
 
-        respJson = resp.json()
-
-        nestedExceptions = {'LookupData':
-                            {'method': 'json_normalize',
-                             'data': 'fields',
-                             'recordPath': 'lookup',
-                             'meta': 'field'},
-                            'LookupValues':
-                                {'method': 'parseLookupValues'}
-                            }
-
-        # Conditional JSON parsing
-        if isinstance(respJson, list):
-            pandasTable = pd.json_normalize(respJson)
-        elif isinstance(respJson, dict):
-            respJsonLower = lowerDictKeys(respJson)
-
-            if list(respJsonLower)[0] == field.lower():
-                respJsonLower = respJsonLower[field.lower()]
-
-            if field in nestedExceptions.keys():
-                parameters = nestedExceptions[field]
-
-                if parameters['method'] == 'json_normalize':
-                    pandasTable = pd.json_normalize(
-                        respJsonLower[parameters['data']], record_path=parameters['recordPath'], meta=parameters['meta'])
-                elif parameters['method'] == 'parseLookupValues':
-                    pandasTable = self.parseLookupValues(respJsonLower)
-            else:
-                pandasTable = pd.json_normalize(respJsonLower)
-
-        # Removes column name prefix from unnested columns
-        # Is this necessary anymore?
-        columnList = []
-
-        for column in pandasTable.columns:
-            if '.' in column:
-                column = column.split('.', 1)[1]
-            columnList.append(column)
-        pandasTable.columns = columnList
-
-        return pandasTable
+        # Flatten and clean response
+        flatDf = self.flattenResponse(resp, field)        
+        cleanFlatDf = self.columnNameClean(flatDf)
+        
+        return cleanFlatDf
 
     def getTransactions(self, id: int, field: str):
         """
