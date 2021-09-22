@@ -262,13 +262,11 @@ class burgissApi():
             Pandas DataFrame [object]
 
         """
-        jsonReshaped = {key: responseJson[key] for key in responseJson.keys()}
+        dfTransformed = pd.json_normalize(responseJson).T.reset_index()
         
-        dfTransformed = pd.json_normalize(
-            jsonReshaped, max_level=0).T.reset_index()
+        dfTransformed[['field', 'id']] = dfTransformed['index'].str.split('.', expand=True)
         
-        dfTransformed = dfTransformed.rename(
-            columns={'index':'field', 0:'value'})
+        dfTransformed = dfTransformed.rename(columns={0: 'value'})
 
         return dfTransformed
 
