@@ -256,8 +256,8 @@ class burgissApi():
                                   'data': 'fields',
                                   'recordPath': 'lookup',
                                   'meta': 'field'},
-                                 'nestedJson':
-                                 {'method': 'parseLookupValues'}
+                                 'LookupValues':
+                                 {'method': 'nestedJson'}
                                  }
 
     def parseNestedJson(self, responseJson):
@@ -290,6 +290,7 @@ class burgissApi():
             if list(respLower)[0] == field.lower():
                 respLower = respLower[field.lower()]
 
+            # Exception handling
             if field in self.nestedExceptions.keys():
                 parameters = self.nestedExceptions[field]
                 if parameters['method'] == 'json_normalize':
@@ -301,7 +302,7 @@ class burgissApi():
                 flatDf = pd.json_normalize(respLower)
         return flatDf
 
-    def columnNameClean(df):
+    def columnNameClean(self, df):
         """
         Removes column name prefix from unnested columns
         """
