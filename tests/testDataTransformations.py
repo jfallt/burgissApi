@@ -24,8 +24,7 @@ def testLookupValuesTransformation():
         'LookupValues', profileIdAsHeader=True)
     assert isinstance(response, pd.DataFrame) == True
     assert len(response) > 0
-    print(response)
-    #assert len(response.columns) == 3
+    assert len(response.columns) == 4
 
 
 def testLookupDataTransformation():
