@@ -1,22 +1,22 @@
 import configparser
+import json
 import logging
 import uuid
 from datetime import datetime, timedelta
 
 import jwt
+import pandas as pd
 import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from OpenSSL import crypto
 
-
-
 # Create logging file for debugging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
     logging.basicConfig(filename='burgissApi.log',
-                    encoding='utf-8', level=logging.DEBUG,
-                    format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+                        encoding='utf-8', level=logging.DEBUG,
+                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 logger = logging.getLogger('burgissApi')
 filehandler_dbg = logging.FileHandler(logger.name + '.log', mode='w')
 
@@ -37,6 +37,11 @@ def responseCodeHandling(response):
             f"API Connection Failure: Error Code {response.status_code}")
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
+
+
+def lowerDictKeys(d):
+    newDict = dict((k.lower(), v) for k, v in d.items())
+    return newDict
 
 
 class burgissApiAuth:
@@ -141,7 +146,7 @@ class burgissApiInit(burgissApiAuth):
         self.urlApi = self.auth.urlApi
         self.analyticsUrlApi = self.auth.analyticsUrlApi
 
-    def request(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False):
+    def request(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False, data=''):
         """
         Burgiss api request call, handling bearer token auth in the header with token received when class initializes
 
@@ -178,8 +183,12 @@ class burgissApiInit(burgissApiAuth):
                 'Authorization': 'Bearer ' + self.token,
             }
 
-        response = requests.request(
-            requestType, baseUrl + url, headers=headers)
+        if len(data) > 0:
+            response = requests.request(
+                requestType, baseUrl + url, headers=headers, data=data)
+        else:
+            response = requests.request(
+                requestType, baseUrl + url, headers=headers)
 
         return responseCodeHandling(response)
 
@@ -193,11 +202,15 @@ class burgissApiSession(burgissApiInit):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
+        config = configparser.ConfigParser()
+        config.read_file(open('config.cfg'))
+        self.profileIdType = config.get('API', 'profileIdType')
         self.session = burgissApiInit()
-        self.profileId = self.session.request(
-            'profiles').json()[0]['profileID']
+        self.profileResponse = self.session.request(
+            'profiles').json()
+        self.profileId = self.profileResponse[0][self.profileIdType]
 
-    def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET'):
+    def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET', data=''):
         """
         Basic request, built on top of burgissApiInit.request, which handles urls and token auth
 
@@ -226,11 +239,141 @@ class burgissApiSession(burgissApiInit):
         endpoint = url + profileUrl + optionalParameters
 
         response = self.session.request(
-            endpoint, analyticsApi, requestType, profileIdHeader)
+            endpoint, analyticsApi, requestType, profileIdHeader, data)
 
         return responseCodeHandling(response)
 
 
-def parseResponse(response):
-    [[print(key, ":", value) for key, value in response[index].items()]
-     for index in range(len(response))]
+class burgissApi():
+    def __init__(self):
+        """
+        Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
+        """
+        self.apiSession = burgissApiSession()
+        # storing exceptions here for now until we can determine a better way to handle them
+        self.nestedExceptions = {'LookupData':
+                                 {'method': 'json_normalize',
+                                  'data': 'fields',
+                                  'recordPath': 'lookup',
+                                  'meta': 'field'},
+                                 'LookupValues':
+                                 {'method': 'nestedJson'}
+                                 }
+
+    def parseNestedJson(self, responseJson):
+        """
+        Custom nested json parser
+
+        Args:
+            responseJson (dict)
+
+        Returns:
+            Pandas DataFrame [object]
+
+        """
+        dfTransformed = pd.json_normalize(responseJson).T.reset_index()
+        dfTransformed[['field', 'id']] = dfTransformed['index'].str.split(
+            '.', expand=True)
+        dfTransformed = dfTransformed.rename(columns={0: 'value'})
+
+        return dfTransformed
+
+    def flattenResponse(self, resp, field):
+        """
+        The api sends a variety of responses, this function determines which parsing method to use based on the response
+        """
+        if isinstance(resp, list):
+            flatDf = pd.json_normalize(resp)
+        elif isinstance(resp, dict):
+            respLower = lowerDictKeys(resp)
+
+            if list(respLower)[0] == field.lower():
+                respLower = respLower[field.lower()]
+
+            # Exception handling
+            if field in self.nestedExceptions.keys():
+                parameters = self.nestedExceptions[field]
+                if parameters['method'] == 'json_normalize':
+                    flatDf = pd.json_normalize(
+                        respLower[parameters['data']], record_path=parameters['recordPath'], meta=parameters['meta'])
+                elif parameters['method'] == 'nestedJson':
+                    flatDf = self.parseNestedJson(respLower)
+            else:
+                flatDf = pd.json_normalize(respLower)
+        return flatDf
+
+    def columnNameClean(self, df):
+        """
+        Removes column name prefix from unnested columns
+        """
+        columnList = []
+
+        for column in df.columns:
+            if '.' in column:
+                column = column.split('.', 1)[1]
+            columnList.append(column)
+        df.columns = columnList
+        return df
+
+    def getData(self, field: str, profileIdAsHeader: bool = False, OptionalParameters: str = ''):
+        """
+        Basic api request and tabular transformation
+
+        Args:
+            field (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
+                - Refer to API docs for specifics
+            useOptionalParameters (str, optional): Certain endpoints have additional settings (i.e. Investments has the following:
+                &includeInvestmentNotes=false
+                &includeCommitmentHistory=false
+                &includeInvestmentLiquidationNotes=false)
+
+        Returns:
+            Pandas DataFrame [object]: Data from 'get' request transformed into relational dataframe
+
+        """
+        resp = self.apiSession.request(
+            field, profileIdAsHeader=profileIdAsHeader, optionalParameters=OptionalParameters).json()
+
+        # Flatten and clean response
+        flatDf = self.flattenResponse(resp, field)        
+        cleanFlatDf = self.columnNameClean(flatDf)
+        
+        return cleanFlatDf
+
+    def getTransactions(self, id: int, field: str):
+        """
+        Basic api request for values in 'transaction' model
+
+        Args:
+            id (int): refers to investmentID
+            field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding') -> Gets list of values for indicated investmentID
+
+        Returns:
+            json [object]: dictionary of specified field's values for investmentID
+
+        """
+        url = f'investments/{id}/transactions/{field}'
+        resp = self.apiSession.request(url=url)
+        return resp.json()
+
+
+def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy):
+    """
+    Simplify nested json input for point in time analysis
+    """
+    # Add start and end date references to global measure and measure params
+    globalMeasureParameters['measureStartDateReference'] = measureStartDateReference
+    globalMeasureParameters['measureEndDateReference'] = measureEndDateReference
+    measures['measureStartDateReference'] = measureStartDateReference
+    measures['measureEndDateReference'] = measureEndDateReference
+
+    # Nest global measure parameters and measures
+    analysisParameters['globalMeasureParameters'] = globalMeasureParameters
+    analysisParameters['measures'] = [measures]
+
+    # Create final json
+    pointInTimeAnalyis = {"pointInTimeAnalysis": [analysisParameters]}
+    pointInTimeAnalyis['dataCriteria'] = [dataCriteria]
+    pointInTimeAnalyis['groupBy'] = groupBy
+
+    return json.dumps(pointInTimeAnalyis)

@@ -21,6 +21,8 @@ pip install burgiss-api
 ```
 
 ## Usage
+Data can be updated via the api, to enable this you must change the scope in the config file and specify the request type.
+
 ```python
 from burgissApi import burgissApiSession
 
@@ -30,15 +32,89 @@ burgissSession = burgissApiSession()
 # Basic Request Syntax (Defaults to get)
 orgs = burgissSession.request('orgs')
 
-# Specifying profile as a header (instead of the request url)
+# Specifying profile as a header (instead of the request url), this occurs for a few of the requests
 lookUpValues = burgissSession.request('LookupValues', profileIdAsHeader=True)
 
 # Optional Parameters
 investments = burgissSession.request('investments', optionalParameters='&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
+```
 
-# Analytics Endpoint (currently very few of these endpoints)
+## Transformed Data Requests
+Some endpoints are supported for transformation to a flattened dataframe instead of a raw json
+
+```python
+from burgissApi import burgissApi
+
+# Very similar syntax to above
+apiSession = burgissApi()
+orgs = apiSession.getData('orgs')
+```
+
+<details>
+<summary>Supported Endpoints</summary>
+
+|Field|
+| -------|
+|investments|
+|orgs|
+|portfolios|
+|LookupData|
+|LookupValues|
+</details>
+
+
+## Analytics API
+```python
+from burgissApi import burgissApiSession
+
+# Initiate a session and get profile id for subsequent calls (obtains auth token)
+burgissSession = burgissApiSession()
+
 burgissSession.request('analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
 ```
+
+<details>
+<summary>Supported Calcs</summary>
+
+|Measure Name| Is Supported for Pooled calculations|
+| --------  | ------------------- |
+|IRR|Yes|
+|TWRR|Yes|
+|Commitment|Yes|
+|AdjustedCommitment|Yes|
+|Unfunded|Yes|
+|NetCapitalContributed|Yes|
+|FundSize|No|
+|DPI|Yes|
+|RVPI|Yes|
+|TVPI|Yes|
+|LN_ICMIRR|Yes|
+|LN_ICMIRRSpread|Yes|
+|LN_ICMValuation|Yes|
+|KS_PME|Yes|
+|GGS_DirectAlpha|Yes|
+|PaidIn|Yes|
+|Funding|Yes|
+|Fees|Yes|
+|Distributions|Yes|
+|Distributions.CapitalGains| 	Yes|
+|Distributions.Income|Yes|
+|Distributions.Other|Yes|
+|Distributions.RecallableCapital| 	Yes|
+|Distributions.ReturnOfCapital|Yes|
+|Valuation|Yes|
+|Cash|Yes|
+|Cash.CapitalGains|Yes|
+|Cash.Income|Yes|
+|Cash.Other|Yes|
+|Cash.RecallableCapital|Yes|
+|Cash.ReturnOfCapital|Yes|
+|Stock|Yes|
+|Stock.CapitalGains|Yes|
+|Stock.Cost|Yes|
+|Stock.RecallableCapital|Yes|
+|Stock.ReturnOfCapital|Yes|
+</details>
 
 ## References
 

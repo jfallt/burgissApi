@@ -1,15 +1,9 @@
 
-from burgissApi import burgissApiSession, burgissApiInit, burgissApiAuth, ApiConnectionError
+from burgissApi.burgissApi import burgissApiSession, burgissApiInit, burgissApiAuth, ApiConnectionError, pointInTimeAnalyisInput
 import pytest
 
-
-#=======================#
-# Test token gen        #
-#=======================#
-def testGetBurgissApiToken():
-    tokenInit = burgissApiAuth()
-    token = tokenInit.getBurgissApiToken()
-    assert len(token) != 0
+import os
+os.chdir("..")
 
 #=======================#
 # Test requests         #
@@ -60,12 +54,3 @@ def testLookupValues():
 def testInvalidUrl():
     with pytest.raises(ApiConnectionError):
         burgissSession.request('fakeUrl')
-
-
-#===========================#
-# BurgissAnalytics requests #
-#===========================#
-def testAnalyticsGroupingFields():
-    response = burgissSession.request(
-        'analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
-    assert response.status_code == 200
