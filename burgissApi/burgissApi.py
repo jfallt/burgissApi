@@ -44,7 +44,7 @@ def lowerDictKeys(d):
     return newDict
 
 
-class burgissApiAuth:
+class burgissApiAuth(object):
     """
     Create and send a signed client token to receive a bearer token from the burgiss api endpoint
     """
@@ -164,6 +164,7 @@ class burgissApiInit(burgissApiAuth):
         if self.tokenExpiration < datetime.utcnow():
             logger.info('Token has expired, getting new token')
             self.token = self.auth.getBurgissApiToken()
+            self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
         else:
             logger.info('Token is still valid')
 
