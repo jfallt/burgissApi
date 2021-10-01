@@ -32,6 +32,11 @@ def responseCodeHandling(response):
     """
     if response.status_code == 200:
         return response
+    elif response.status_code == 404:
+        logger.error(
+            "Url not found")
+        raise ApiConnectionError(
+            'Url not found, check the logs for the specific url!')
     else:
         logger.error(
             f"API Connection Failure: Error Code {response.status_code}")
