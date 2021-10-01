@@ -10,9 +10,9 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 
-VERSION = '0.0.3'
-DESCRIPTION = 'An api request package for Burgiss'
-LONG_DESCRIPTION = 'A package that makes it easy to make requests to the Burgiss API by simplifying the JWT token auth and various endpoints'
+VERSION = '0.0.5'
+DESCRIPTION = 'An api wrapper package for Burgiss'
+LONG_DESCRIPTION = 'A package that makes it easy to make requests to the Burgiss API by simplifying the JWT token auth. Additional functionality includes data transformations.'
 
 setup(
     name="burgiss-api",

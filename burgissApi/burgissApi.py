@@ -32,6 +32,11 @@ def responseCodeHandling(response):
     """
     if response.status_code == 200:
         return response
+    elif response.status_code == 404:
+        logger.error(
+            "Url not found")
+        raise ApiConnectionError(
+            'Url not found, check the logs for the specific url!')
     else:
         logger.error(
             f"API Connection Failure: Error Code {response.status_code}")
@@ -44,7 +49,7 @@ def lowerDictKeys(d):
     return newDict
 
 
-class burgissApiAuth:
+class burgissApiAuth(object):
     """
     Create and send a signed client token to receive a bearer token from the burgiss api endpoint
     """
@@ -164,6 +169,7 @@ class burgissApiInit(burgissApiAuth):
         if self.tokenExpiration < datetime.utcnow():
             logger.info('Token has expired, getting new token')
             self.token = self.auth.getBurgissApiToken()
+            self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
         else:
             logger.info('Token is still valid')
 
