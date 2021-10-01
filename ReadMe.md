@@ -55,9 +55,11 @@ orgs = apiSession.getData('orgs')
 
 |Field|
 | -------|
-|investments|
-|orgs|
 |portfolios|
+|orgs|
+|orgs details|
+|investments|
+|investments transactions|
 |LookupData|
 |LookupValues|
 </details>
