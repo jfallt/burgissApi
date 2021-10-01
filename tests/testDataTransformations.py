@@ -19,6 +19,18 @@ def testOrgsTransformation():
     assert len(response) > 0
 
 
+def testInvestmentsTransformation():
+    response = burgissApiSession.getData('investments')
+    assert isinstance(response, pd.DataFrame) == True
+    assert len(response) > 0
+
+
+def testPortfoliosTransformation():
+    response = burgissApiSession.getData('portfolios')
+    assert isinstance(response, pd.DataFrame) == True
+    assert len(response) > 0
+
+
 def testLookupValuesTransformation():
     response = burgissApiSession.getData(
         'LookupValues', profileIdAsHeader=True)
