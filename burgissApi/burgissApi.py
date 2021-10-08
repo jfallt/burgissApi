@@ -250,7 +250,7 @@ class burgissApiSession(burgissApiInit):
         return responseCodeHandling(response)
 
 
-class burgissApi():
+class burgissApi(burgissApiSession):
     def __init__(self):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
