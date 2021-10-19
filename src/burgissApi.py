@@ -382,4 +382,10 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
     pointInTimeAnalyis['dataCriteria'] = [dataCriteria]
     pointInTimeAnalyis['groupBy'] = groupBy
 
-    return json.dumps(pointInTimeAnalyis)
+    print(pointInTimeAnalyis)
+    # Remove any none or null values
+    pointInTimeAnalyisProcessed = {x:y for x,y in pointInTimeAnalyis.items() if (y is not None and y!='null') }
+    print(pointInTimeAnalyis)
+
+    return pointInTimeAnalyis, pointInTimeAnalyisProcessed
+    #return json.dumps(pointInTimeAnalyis)
