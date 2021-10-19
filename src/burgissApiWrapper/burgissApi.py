@@ -1,5 +1,4 @@
 import configparser
-import json
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -49,7 +48,7 @@ def lowerDictKeys(d):
     return newDict
 
 
-class burgissApiAuth(object):
+class tokenAuth(object):
     """
     Create and send a signed client token to receive a bearer token from the burgiss api endpoint
     """
@@ -139,19 +138,19 @@ class burgissApiAuth(object):
                 'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
 
-class burgissApiInit(burgissApiAuth):
+class init(tokenAuth):
     """
-    Initializes a session for all subsequent calls using the burgissApiAuth class
+    Initializes a session for all subsequent calls using the tokenAuth class
     """
 
     def __init__(self):
-        self.auth = burgissApiAuth()
+        self.auth = tokenAuth()
         self.token = self.auth.getBurgissApiToken()
         self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
         self.urlApi = self.auth.urlApi
         self.analyticsUrlApi = self.auth.analyticsUrlApi
 
-    def request(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False, data=''):
+    def requestWrapper(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False, data=''):
         """
         Burgiss api request call, handling bearer token auth in the header with token received when class initializes
 
@@ -174,7 +173,7 @@ class burgissApiInit(burgissApiAuth):
             logger.info('Token is still valid')
 
         # Default to regular api but allow for analytics url
-        if analyticsApi == False:
+        if analyticsApi is False:
             baseUrl = self.urlApi
         else:
             baseUrl = self.analyticsUrlApi
@@ -199,7 +198,7 @@ class burgissApiInit(burgissApiAuth):
         return responseCodeHandling(response)
 
 
-class burgissApiSession(burgissApiInit):
+class session(init):
     """
     Simplifies request calls by getting auth token and profile id from parent classes
     """
@@ -211,14 +210,14 @@ class burgissApiSession(burgissApiInit):
         config = configparser.ConfigParser()
         config.read_file(open('config.cfg'))
         self.profileIdType = config.get('API', 'profileIdType')
-        self.session = burgissApiInit()
-        self.profileResponse = self.session.request(
+        self.session = init()
+        self.profileResponse = self.session.requestWrapper(
             'profiles').json()
         self.profileId = self.profileResponse[0][self.profileIdType]
 
     def request(self, url: str, analyticsApi: bool = False, profileIdAsHeader: bool = False, optionalParameters: str = '',  requestType: str = 'GET', data=''):
         """
-        Basic request, built on top of burgissApiInit.request, which handles urls and token auth
+        Basic request, built on top of init.requestWrapper, which handles urls and token auth
 
         Args:
             url (str): Each burgiss endpoint has different key words e.g. 'investments' -> Gets list of investments
@@ -235,7 +234,7 @@ class burgissApiSession(burgissApiInit):
             response [object]: Request object, refer to the requests package documenation for details
         """
 
-        if profileIdAsHeader == False:
+        if profileIdAsHeader is False:
             profileUrl = f'?profileID={self.profileId}'
             profileIdHeader = False
         else:
@@ -244,18 +243,18 @@ class burgissApiSession(burgissApiInit):
 
         endpoint = url + profileUrl + optionalParameters
 
-        response = self.session.request(
+        response = self.session.requestWrapper(
             endpoint, analyticsApi, requestType, profileIdHeader, data)
 
         return responseCodeHandling(response)
 
 
-class burgissApi(burgissApiSession):
+class transformResponse(session):
     def __init__(self):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
-        self.apiSession = burgissApiSession()
+        self.apiSession = session()
         # storing exceptions here for now until we can determine a better way to handle them
         self.nestedExceptions = {'LookupData':
                                  {'method': 'json_normalize',
@@ -341,9 +340,9 @@ class burgissApi(burgissApiSession):
             field, profileIdAsHeader=profileIdAsHeader, optionalParameters=OptionalParameters).json()
 
         # Flatten and clean response
-        flatDf = self.flattenResponse(resp, field)        
+        flatDf = self.flattenResponse(resp, field)
         cleanFlatDf = self.columnNameClean(flatDf)
-        
+
         return cleanFlatDf
 
     def getTransactions(self, id: int, field: str):
@@ -352,7 +351,8 @@ class burgissApi(burgissApiSession):
 
         Args:
             id (int): refers to investmentID
-            field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding') -> Gets list of values for indicated investmentID
+            field (str): 'transaction' model has different key words (e.g. 'valuation', 'cash', 'stock', 'fee', 'funding')
+                -> Gets list of values for indicated investmentID
 
         Returns:
             json [object]: dictionary of specified field's values for investmentID
@@ -384,8 +384,44 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
 
     print(pointInTimeAnalyis)
     # Remove any none or null values
-    pointInTimeAnalyisProcessed = {x:y for x,y in pointInTimeAnalyis.items() if (y is not None and y!='null') }
+    # pointInTimeAnalyisProcessed = {x:y for x,y in pointInTimeAnalyis.items() if (y is not None and y!='null') }
     print(pointInTimeAnalyis)
 
-    return pointInTimeAnalyis, pointInTimeAnalyisProcessed
-    #return json.dumps(pointInTimeAnalyis)
+    return pointInTimeAnalyis
+    # return json.dumps(pointInTimeAnalyis)
+
+
+class testApiResponses():
+    def __init__(self) -> None:
+        self.initSession = init()
+        self.burgissSession = session()
+        self.transformResponse = transformResponse()
+
+        self.endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
+
+    def testGetBurgissApiToken(self):
+        tokenInit = tokenAuth()
+        token = tokenInit.getBurgissApiToken()
+        assert len(token) != 0
+
+    def testProfileRequest(self):
+        profileResponse = self.initSession.requestWrapper('profiles')
+        assert profileResponse.status_code == 200
+
+    def testRequestResponseCode(self, endpoint):
+        response = self.burgissSession.request(endpoint)
+        assert response.status_code == 200
+
+    def testOptionalParametersRequestResponseCode(self, endpoint, optionalParameters):
+        response = self.burgissSession.request(
+            endpoint, optionalParameters=optionalParameters)
+        assert response.status_code == 200
+
+    def testProfileIdAsHeaderResponse(self, endpoint):
+        response = self.burgissSession.request(endpoint, profileIdAsHeader=True)
+        assert response.status_code == 200
+
+    def testDataTransformation(self, endpoint):
+        response = self.transformResponse.getData(endpoint)
+        assert isinstance(response, pd.DataFrame) == True
+        assert len(response) > 0
