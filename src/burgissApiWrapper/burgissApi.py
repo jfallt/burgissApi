@@ -148,9 +148,13 @@ class tokenAuth(object):
             'aud': self.urlToken
         }
 
-        logger.info("Encode client assertion with jwt")
-        clientToken = jwt.encode(
+        logger.info("Encoding client assertion with jwt")
+        try:
+            clientToken = jwt.encode(
             payload, secret_key, headers=headers, algorithm='RS256')
+            logger.info("Encoding complete!")
+        except Exception as e:
+            logging.error(e)
 
         payload = {
             'grant_type': 'password',
