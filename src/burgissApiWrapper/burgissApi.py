@@ -41,7 +41,7 @@ def responseCodeHandling(response):
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
-def tokenErrorHandling(tokenResponseJson):
+def tokenErrorHandling(tokenResponseJson: dict):
     # Error Handling
     if 'access_token' in tokenResponseJson.keys():
         logger.info("Token request successful!")
@@ -61,7 +61,7 @@ def tokenErrorHandling(tokenResponseJson):
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
-def lowerDictKeys(d):
+def lowerDictKeys(d:dict):
     newDict = dict((k.lower(), v) for k, v in d.items())
     return newDict
 
@@ -270,7 +270,7 @@ class transformResponse(session):
                                  {'method': 'nestedJson'}
                                  }
 
-    def parseNestedJson(self, responseJson):
+    def parseNestedJson(self, responseJson: dict):
         """
         Custom nested json parser
 
@@ -288,7 +288,7 @@ class transformResponse(session):
 
         return dfTransformed
 
-    def flattenResponse(self, resp, field):
+    def flattenResponse(self, resp, field: str):
         """
         The api sends a variety of responses, this function determines which parsing method to use based on the response
         """
@@ -312,7 +312,7 @@ class transformResponse(session):
                 flatDf = pd.json_normalize(respLower)
         return flatDf
 
-    def columnNameClean(self, df):
+    def columnNameClean(self, df: pd.DataFrame):
         """
         Removes column name prefix from unnested columns
         """
