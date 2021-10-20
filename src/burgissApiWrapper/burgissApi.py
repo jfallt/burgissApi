@@ -29,19 +29,37 @@ def responseCodeHandling(response):
     """
     Handle request responses and log if there are errors
     """
+    knownResponseCodes = {400: 'Unauthorized', 401: 'Forbidden', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable'}
     if response.status_code == 200:
         return response
-    elif response.status_code == 404:
+    elif response.status_code in knownResponseCodes.keys():
         logger.error(
-            "Url not found")
+            f"API Connection Failure: Error Code {response.status_code}, {knownResponseCodes[response.status_code]}")
         raise ApiConnectionError(
-            'Url not found, check the logs for the specific url!')
+            f"Error Code {response.status_code}, {knownResponseCodes[response.status_cod]}")
     else:
-        logger.error(
-            f"API Connection Failure: Error Code {response.status_code}")
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
+def tokenErrorHandling(tokenResponseJson):
+    # Error Handling
+    if 'access_token' in tokenResponseJson.keys():
+        logger.info("Token request successful!")
+        return tokenResponseJson['access_token']
+    elif 'error' in tokenResponseJson.keys():
+        logging.error(
+            f"API Connection Error: {tokenResponseJson['error']}")
+        raise ApiConnectionError(
+            'Check BurgissApi.log for details')
+    elif 'status_code' in tokenResponseJson.keys():
+        logging.error(
+            f"API Connection Error: Error Code {tokenResponseJson ['status_code']}")
+        raise ApiConnectionError(
+            'Check BurgissApi.log for details')
+    else:
+        logging.error("Cannot connect to endpoint")
+        raise ApiConnectionError(
+            'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
 def lowerDictKeys(d):
     newDict = dict((k.lower(), v) for k, v in d.items())
@@ -116,26 +134,9 @@ class tokenAuth(object):
         tokenResponse = requests.request(
             'POST', self.urlToken, data=payload
         )
-        tokenResponseJson = tokenResponse.json()
+        return tokenErrorHandling(tokenResponse.json())
 
-        # Error Handling
-        if 'access_token' in tokenResponseJson.keys():
-            logger.info("Token request successful!")
-            return tokenResponseJson['access_token']
-        elif 'error' in tokenResponseJson.keys():
-            logging.error(
-                f"API Connection Error: {tokenResponseJson['error']}")
-            raise ApiConnectionError(
-                'Check BurgissApi.log for details')
-        elif 'status_code' in tokenResponseJson.keys():
-            logging.error(
-                f"API Connection Error: Error Code {tokenResponseJson ['status_code']}")
-            raise ApiConnectionError(
-                'Check BurgissApi.log for details')
-        else:
-            logging.error("Cannot connect to endpoint")
-            raise ApiConnectionError(
-                'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
+        
 
 
 class init(tokenAuth):
@@ -150,6 +151,18 @@ class init(tokenAuth):
         self.urlApi = self.auth.urlApi
         self.analyticsUrlApi = self.auth.analyticsUrlApi
 
+    def checkTokenExpiration(self):
+        """
+        Check if token is expired, if it is get a new token
+        """
+        logger.info('Check if token has expired')
+        if self.tokenExpiration < datetime.utcnow():
+            logger.info('Token has expired, getting new token')
+            self.token = self.auth.getBurgissApiToken()
+            self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
+        else:
+            logger.info('Token is still valid')
+
     def requestWrapper(self, url: str, analyticsApi: bool = False, requestType: str = 'GET', profileIdHeader: bool = False, data=''):
         """
         Burgiss api request call, handling bearer token auth in the header with token received when class initializes
@@ -162,16 +175,8 @@ class init(tokenAuth):
         Returns:
             Response [json]: Data from url input
         """
-
-        # Check if token is expired, if it is get a new token
-        logger.info('Check if token has expired')
-        if self.tokenExpiration < datetime.utcnow():
-            logger.info('Token has expired, getting new token')
-            self.token = self.auth.getBurgissApiToken()
-            self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
-        else:
-            logger.info('Token is still valid')
-
+        self.checkTokenExpiration()
+        
         # Default to regular api but allow for analytics url
         if analyticsApi is False:
             baseUrl = self.urlApi
@@ -403,6 +408,12 @@ class testApiResponses():
         tokenInit = tokenAuth()
         token = tokenInit.getBurgissApiToken()
         assert len(token) != 0
+
+    def testTokenReset(self):
+        tokenExpiration = self.initSession.tokenExpiration
+        self.initSession.tokenExpiration = datetime.now() + timedelta(seconds=3600)
+        self.initSession.checkTokenExpiration()
+        assert tokenExpiration != self.initSession.tokenExpiration
 
     def testProfileRequest(self):
         profileResponse = self.initSession.requestWrapper('profiles')
