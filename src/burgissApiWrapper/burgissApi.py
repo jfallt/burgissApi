@@ -10,14 +10,16 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from OpenSSL import crypto
 
-# Create logging file for debugging
-for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-    logging.basicConfig(filename='burgissApi.log',
-                        encoding='utf-8', level=logging.DEBUG,
-                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-logger = logging.getLogger('burgissApi')
-filehandler_dbg = logging.FileHandler(logger.name + '.log', mode='w')
+# Create and configure logger
+logging.basicConfig(filename="burgissApiWrapper.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+
+# Creating an object
+logger = logging.getLogger()
+
+# Setting the threshold of logger to DEBUG
+logger.setLevel(logging.DEBUG)
 
 
 class ApiConnectionError(Exception):
@@ -36,10 +38,11 @@ def responseCodeHandling(response):
         logger.error(
             f"API Connection Failure: Error Code {response.status_code}, {knownResponseCodes[response.status_code]}")
         raise ApiConnectionError(
-            f"Error Code {response.status_code}, {knownResponseCodes[response.status_cod]}")
+            f"Error Code {response.status_code}, {knownResponseCodes[response.status_code]}")
     else:
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
+
 
 def tokenErrorHandling(tokenResponseJson: dict):
     # Error Handling
@@ -61,7 +64,8 @@ def tokenErrorHandling(tokenResponseJson: dict):
         raise ApiConnectionError(
             'No recognized reponse from Burgiss API, Check BurgissApi.log for details')
 
-def lowerDictKeys(d:dict):
+
+def lowerDictKeys(d: dict):
     newDict = dict((k.lower(), v) for k, v in d.items())
     return newDict
 
@@ -71,32 +75,60 @@ class tokenAuth(object):
     Create and send a signed client token to receive a bearer token from the burgiss api endpoint
     """
 
-    def __init__(self):
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None):
         logger.info("Import client details from config file")
         config = configparser.ConfigParser()
-        config.read_file(open('config.cfg'))
-        self.clientId = config.get('API', 'clientId')
-        self.username = config.get('API', 'user')
-        self.password = config.get('API', 'pw')
-        self.urlToken = config.get('API', 'tokenUrl')
-        self.urlApi = config.get('API', 'apiUrl')
-        self.analyticsUrlApi = config.get('API', 'apiUrlAnalytics')
-        self.assertionType = config.get('API', 'assertionType')
-        self.scope = config.get('API', 'scope')
+        try:
+            config.read_file(open('config.cfg'))
+            if clientId is not None:
+                self.clientId = clientId
+            else:
+                self.clientId = config.get('API', 'clientId')
+            if username is not None:
+                self.username = username
+            else:
+                self.username = config.get('API', 'user')
+            if password is not None:
+                self.password = password
+            else:
+                self.password = config.get('API', 'pw')
+            if urlToken is not None:
+                self.urlToken = urlToken
+            else:
+                self.urlToken = config.get('API', 'tokenUrl')
+            if urlApi is not None:
+                self.urlApi = urlApi
+            else:
+                self.urlApi = config.get('API', 'apiUrl')
+            if analyticsUrlApi is not None:
+                self.analyticsUrlApi = analyticsUrlApi
+            else:
+                self.analyticsUrlApi = config.get('API', 'apiUrlAnalytics')
+            if assertionType is not None:
+                self.assertionType = assertionType
+            else:
+                self.assertionType = config.get('API', 'assertionType')
+            if scope is not None:
+                self.scope = scope
+            else:
+                self.scope = config.get('API', 'scope')
+        except:
+            print('Config file not found, is it located in your cwd?')
         logger.info("Client details import complete!")
 
-    def getBurgissApiToken(self):
+    def getBurgissApiToken(self, secret_key=None):
         """
         Sends a post request to burgiss api and returns a bearer token
         """
         logger.info("Begin Burgiss Token Authentication")
 
-        # Read private key from file, used to encode jwt
-        logger.info("Read private key from current directory")
-        with open('private.pem', 'rb') as privateKey:
-            secret = privateKey.read()
-            secret_key = serialization.load_pem_private_key(
-                secret, password=None, backend=default_backend())
+        if secret_key is None:
+            # Read private key from file, used to encode jwt
+            logger.info("Read private key from current directory")
+            with open('private.pem', 'rb') as privateKey:
+                secret = privateKey.read()
+                secret_key = serialization.load_pem_private_key(
+                    secret, password=None, backend=default_backend())
 
         now = datetime.utcnow()
         exp = now + timedelta(minutes=1)
@@ -136,16 +168,14 @@ class tokenAuth(object):
         )
         return tokenErrorHandling(tokenResponse.json())
 
-        
-
 
 class init(tokenAuth):
     """
     Initializes a session for all subsequent calls using the tokenAuth class
     """
 
-    def __init__(self):
-        self.auth = tokenAuth()
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None):
+        self.auth = tokenAuth(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
         self.token = self.auth.getBurgissApiToken()
         self.tokenExpiration = datetime.utcnow() + timedelta(seconds=3600)
         self.urlApi = self.auth.urlApi
@@ -176,7 +206,7 @@ class init(tokenAuth):
             Response [json]: Data from url input
         """
         self.checkTokenExpiration()
-        
+
         # Default to regular api but allow for analytics url
         if analyticsApi is False:
             baseUrl = self.urlApi
@@ -208,14 +238,14 @@ class session(init):
     Simplifies request calls by getting auth token and profile id from parent classes
     """
 
-    def __init__(self):
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
         config = configparser.ConfigParser()
         config.read_file(open('config.cfg'))
         self.profileIdType = config.get('API', 'profileIdType')
-        self.session = init()
+        self.session = init(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
         self.profileResponse = self.session.requestWrapper(
             'profiles').json()
         self.profileId = self.profileResponse[0][self.profileIdType]
@@ -395,44 +425,7 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
     return pointInTimeAnalyis
     # return json.dumps(pointInTimeAnalyis)
 
-
-class testApiResponses():
-    def __init__(self) -> None:
-        self.initSession = init()
-        self.burgissSession = session()
-        self.transformResponse = transformResponse()
-
-        self.endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
-
-    def testGetBurgissApiToken(self):
-        tokenInit = tokenAuth()
-        token = tokenInit.getBurgissApiToken()
-        assert len(token) != 0
-
-    def testTokenReset(self):
-        tokenExpiration = self.initSession.tokenExpiration
-        self.initSession.tokenExpiration = datetime.now() + timedelta(seconds=3600)
-        self.initSession.checkTokenExpiration()
-        assert tokenExpiration != self.initSession.tokenExpiration
-
-    def testProfileRequest(self):
-        profileResponse = self.initSession.requestWrapper('profiles')
-        assert profileResponse.status_code == 200
-
-    def testRequestResponseCode(self, endpoint):
-        response = self.burgissSession.request(endpoint)
-        assert response.status_code == 200
-
-    def testOptionalParametersRequestResponseCode(self, endpoint, optionalParameters):
-        response = self.burgissSession.request(
-            endpoint, optionalParameters=optionalParameters)
-        assert response.status_code == 200
-
-    def testProfileIdAsHeaderResponse(self, endpoint):
-        response = self.burgissSession.request(endpoint, profileIdAsHeader=True)
-        assert response.status_code == 200
-
-    def testDataTransformation(self, endpoint):
-        response = self.transformResponse.getData(endpoint)
-        assert isinstance(response, pd.DataFrame) == True
-        assert len(response) > 0
+if __name__ == "__main__":
+    init = tokenAuth()
+    print(init.clientId)
+    print(init.password)
