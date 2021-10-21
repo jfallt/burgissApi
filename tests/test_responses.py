@@ -5,9 +5,8 @@ from burgissApiWrapper.burgissApi import (ApiConnectionError,
                                           )
 from requests.models import Response
 
-def testTokenGen(testApiResponsesFixture, secret):
-    print(secret)
-    testApiResponsesFixture.testGetBurgissApiToken(secret)
+def testTokenGen(testApiResponsesFixture):
+    testApiResponsesFixture.testGetBurgissApiToken()
 
 def testTokenExpiration(testApiResponsesFixture):
     testApiResponsesFixture.testTokenReset()
