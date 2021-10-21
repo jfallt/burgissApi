@@ -1,43 +1,40 @@
 import pytest
 from burgissApiWrapper.burgissApi import (ApiConnectionError,
                                           responseCodeHandling,
-                                          testApiResponses, tokenErrorHandling)
+                                          tokenErrorHandling,
+                                          )
 from requests.models import Response
 
-testApiResponses = testApiResponses()
+def testTokenGen(testApiResponsesFixture, secret):
+    print(secret)
+    testApiResponsesFixture.testGetBurgissApiToken(secret)
 
+def testTokenExpiration(testApiResponsesFixture):
+    testApiResponsesFixture.testTokenReset()
 
-def testTokenGen():
-    testApiResponses.testGetBurgissApiToken()
+def testGetProfile(testApiResponsesFixture):
+    testApiResponsesFixture.testProfileRequest()
 
-def testTokenExpiration():
-    testApiResponses.testTokenReset()
-
-def testGetProfile():
-    testApiResponses.testProfileRequest()
-
-
-def testOptionalParameters():
-    testApiResponses.testOptionalParametersRequestResponseCode('investments',
+def testOptionalParameters(testApiResponsesFixture):
+    testApiResponsesFixture.testOptionalParametersRequestResponseCode('investments',
                                                                '&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
 
+def testProfileIdAsHeader(testApiResponsesFixture):
+    testApiResponsesFixture.testProfileIdAsHeaderResponse('LookupValues')
 
-def testProfileIdAsHeader():
-    testApiResponses.testProfileIdAsHeaderResponse('LookupValues')
+endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
 
-
-@pytest.mark.parametrize('endpoint', testApiResponses.endpoints)
-def testEndpoints(endpoint):
+@pytest.mark.parametrize('endpoint', endpoints)
+def testEndpoints(endpoint, testApiResponsesFixture):
     """
     Test if endpoint returns a 200 status code
     """
-    testApiResponses.testRequestResponseCode(endpoint)
+    testApiResponsesFixture.testRequestResponseCode(endpoint)
 
-
-@pytest.mark.parametrize('endpoint', testApiResponses.endpoints)
-def testDataTransformation(endpoint):
+@pytest.mark.parametrize('endpoint', endpoints)
+def testDataTransformation(endpoint, testApiResponsesFixture):
     "Test if endpoint returns a flattened dataframe with length > 0"
-    testApiResponses.testDataTransformation(endpoint)
+    testApiResponsesFixture.testDataTransformation(endpoint)
 
 # Test token response handling
 validTokenExample = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
