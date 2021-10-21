@@ -112,10 +112,12 @@ class tokenAuth(object):
                 self.scope = scope
             else:
                 self.scope = config.get('API', 'scope')
-        except:
+        except Exception as e:
+            logging.error(e)
             print('Config file not found, is it located in your cwd?')
         logger.info("Client details import complete!")
 
+    
     def getBurgissApiToken(self, secret_key=None):
         """
         Sends a post request to burgiss api and returns a bearer token
@@ -135,7 +137,7 @@ class tokenAuth(object):
 
         headers = {
             'alg': 'RS256',
-            'kid': crypto.X509().digest('sha1').decode('utf-8').replace(':', ''),
+            'kid': crypto.X509().digest('sha1').decode('utf-8').replace(':', ''), # type: ignore 
             'typ': 'JWT'
         }
         payload = {
@@ -151,7 +153,7 @@ class tokenAuth(object):
         logger.info("Encoding client assertion with jwt")
         try:
             clientToken = jwt.encode(
-            payload, secret_key, headers=headers, algorithm='RS256')
+                payload, secret_key, headers=headers, algorithm='RS256')
             logger.info("Encoding complete!")
         except Exception as e:
             logging.error(e)
@@ -428,8 +430,3 @@ def pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters, measure
 
     return pointInTimeAnalyis
     # return json.dumps(pointInTimeAnalyis)
-
-if __name__ == "__main__":
-    init = tokenAuth()
-    print(init.clientId)
-    print(init.password)
