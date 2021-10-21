@@ -9,11 +9,11 @@ from pandas import DataFrame
 
 
 class testApiResponses():
-    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None) -> None:
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None, profileIdType=None) -> None:
         self.tokenInit = tokenAuth(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
         self.initSession = init(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
-        self.burgissSession = session(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
-        self.transformResponse = transformResponse()
+        self.burgissSession = session(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope, profileIdType)
+        self.transformResponse = transformResponse(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope, profileIdType)
 
         self.endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
 
@@ -66,7 +66,6 @@ def pytest_addoption(parser):
     parser.addoption("--assertionType", action="store", default=config.get('API', 'assertionType'))
     parser.addoption("--scope", action="store", default=config.get('API', 'scope'))
     parser.addoption("--profileIdType", action="store", default=config.get('API', 'profileIdType'))
-    parser.addoption("--secret", action="store")
 
 
 @pytest.fixture(scope='session')
@@ -82,7 +81,8 @@ def testApiResponsesFixture(pytestconfig):
     apiUrlAnalytics = pytestconfig.getoption("apiUrlAnalytics")
     assertionType = pytestconfig.getoption("assertionType")
     scope = pytestconfig.getoption("scope")
-    test = testApiResponses(clientId, user, pw, tokenUrl, apiUrl, apiUrlAnalytics, assertionType, scope)
+    profileIdType = pytestconfig.getoption("profileIdType")
+    test = testApiResponses(clientId, user, pw, tokenUrl, apiUrl, apiUrlAnalytics, assertionType, scope, profileIdType)
 
     # Session
     test.burgissSession.profileIdType = pytestconfig.getoption("profileIdType")

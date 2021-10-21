@@ -80,41 +80,33 @@ class tokenAuth(object):
         config = configparser.ConfigParser()
         try:
             config.read_file(open('config.cfg'))
-            if clientId is not None:
-                self.clientId = clientId
-            else:
-                self.clientId = config.get('API', 'clientId')
-            if username is not None:
-                self.username = username
-            else:
-                self.username = config.get('API', 'user')
-            if password is not None:
-                self.password = password
-            else:
-                self.password = config.get('API', 'pw')
-            if urlToken is not None:
-                self.urlToken = urlToken
-            else:
-                self.urlToken = config.get('API', 'tokenUrl')
-            if urlApi is not None:
-                self.urlApi = urlApi
-            else:
-                self.urlApi = config.get('API', 'apiUrl')
-            if analyticsUrlApi is not None:
-                self.analyticsUrlApi = analyticsUrlApi
-            else:
-                self.analyticsUrlApi = config.get('API', 'apiUrlAnalytics')
-            if assertionType is not None:
-                self.assertionType = assertionType
-            else:
-                self.assertionType = config.get('API', 'assertionType')
-            if scope is not None:
-                self.scope = scope
-            else:
-                self.scope = config.get('API', 'scope')
+            self.clientId = config.get('API', 'clientId')
+            self.username = config.get('API', 'user')
+            self.password = config.get('API', 'pw')
+            self.urlToken = config.get('API', 'tokenUrl')
+            self.urlApi = config.get('API', 'apiUrl')
+            self.analyticsUrlApi = config.get('API', 'apiUrlAnalytics')
+            self.assertionType = config.get('API', 'assertionType')
+            self.scope = config.get('API', 'scope')
         except Exception as e:
             logging.error(e)
             print('Config file not found, is it located in your cwd?')
+        if clientId is not None:
+            self.clientId = clientId
+        if username is not None:
+            self.username = username
+        if password is not None:
+            self.password = password
+        if urlToken is not None:
+            self.urlToken = urlToken
+        if urlApi is not None:
+            self.urlApi = urlApi
+        if analyticsUrlApi is not None:
+            self.analyticsUrlApi = analyticsUrlApi
+        if assertionType is not None:
+            self.assertionType = assertionType 
+        if scope is not None:
+            self.scope = scope
         logger.info("Client details import complete!")
 
     def getBurgissApiToken(self):
@@ -242,13 +234,17 @@ class session(init):
     Simplifies request calls by getting auth token and profile id from parent classes
     """
 
-    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None):
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None, profileIdType=None):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
         config = configparser.ConfigParser()
-        config.read_file(open('config.cfg'))
-        self.profileIdType = config.get('API', 'profileIdType')
+        try:
+            config.read_file(open('config.cfg'))
+            self.profileIdType = config.get('API', 'profileIdType')
+        except:
+            if profileIdType is not None:
+                self.profileIdType = profileIdType
         self.session = init(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)
         self.profileResponse = self.session.requestWrapper(
             'profiles').json()
@@ -289,11 +285,11 @@ class session(init):
 
 
 class transformResponse(session):
-    def __init__(self):
+    def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None, profileIdType=None):
         """
         Initializes a request session, authorizing with the api and gets the profile ID associated with the logged in account
         """
-        self.apiSession = session()
+        self.apiSession = session(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope, profileIdType)
         # storing exceptions here for now until we can determine a better way to handle them
         self.nestedExceptions = {'LookupData':
                                  {'method': 'json_normalize',
