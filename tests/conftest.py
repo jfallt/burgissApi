@@ -1,7 +1,6 @@
-import codecs
 import configparser
-import datetime
 from datetime import datetime, timedelta
+
 
 import pytest
 from burgissApiWrapper.burgissApi import (init, session, tokenAuth,
@@ -18,8 +17,8 @@ class testApiResponses():
 
         self.endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
 
-    def testGetBurgissApiToken(self, secret=None):
-        token = self.tokenInit.getBurgissApiToken(secret)
+    def testGetBurgissApiToken(self):
+        token = self.tokenInit.getBurgissApiToken()
         assert len(token) != 0
 
     def testTokenReset(self):
@@ -47,14 +46,16 @@ class testApiResponses():
 
     def testDataTransformation(self, endpoint):
         response = self.transformResponse.getData(endpoint)
-        assert isinstance(response, DataFrame) == True
+        assert isinstance(response, DataFrame) is True
         assert len(response) > 0
+
 
 def pytest_addoption(parser):
     config = configparser.ConfigParser()
     try:
         config.read_file(open('config.cfg'))
-    except:
+    except Exception as e:
+        print(e)
         config.read_file(open('configTemplate.cfg'))
     parser.addoption("--user", action="store", default=config.get('API', 'user'))
     parser.addoption("--pw", action="store", default=config.get('API', 'pw'))
@@ -67,12 +68,13 @@ def pytest_addoption(parser):
     parser.addoption("--profileIdType", action="store", default=config.get('API', 'profileIdType'))
     parser.addoption("--secret", action="store")
 
+
 @pytest.fixture(scope='session')
 def testApiResponsesFixture(pytestconfig):
     """
-    
+
     """
-    clientId= pytestconfig.getoption("clientId")
+    clientId = pytestconfig.getoption("clientId")
     user = pytestconfig.getoption("user")
     pw = pytestconfig.getoption("pw")
     tokenUrl = pytestconfig.getoption("tokenUrl")

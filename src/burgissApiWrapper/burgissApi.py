@@ -117,27 +117,25 @@ class tokenAuth(object):
             print('Config file not found, is it located in your cwd?')
         logger.info("Client details import complete!")
 
-    
-    def getBurgissApiToken(self, secret_key=None):
+    def getBurgissApiToken(self):
         """
         Sends a post request to burgiss api and returns a bearer token
         """
         logger.info("Begin Burgiss Token Authentication")
 
-        if secret_key is None:
-            # Read private key from file, used to encode jwt
-            logger.info("Read private key from current directory")
-            with open('private.pem', 'rb') as privateKey:
-                secret = privateKey.read()
-                secret_key = serialization.load_pem_private_key(
-                    secret, password=None, backend=default_backend())
+        # Read private key from file, used to encode jwt
+        logger.info("Read private key from current directory")
+        with open('private.pem', 'rb') as privateKey:
+            secret = privateKey.read()
+            secret_key = serialization.load_pem_private_key(
+                secret, password=None, backend=default_backend())
 
         now = datetime.utcnow()
         exp = now + timedelta(minutes=1)
 
         headers = {
             'alg': 'RS256',
-            'kid': crypto.X509().digest('sha1').decode('utf-8').replace(':', ''), # type: ignore 
+            'kid': crypto.X509().digest('sha1').decode('utf-8').replace(':', ''),  # type: ignore
             'typ': 'JWT'
         }
         payload = {

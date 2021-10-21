@@ -5,23 +5,34 @@ from burgissApiWrapper.burgissApi import (ApiConnectionError,
                                           )
 from requests.models import Response
 
+
 def testTokenGen(testApiResponsesFixture):
     testApiResponsesFixture.testGetBurgissApiToken()
+
 
 def testTokenExpiration(testApiResponsesFixture):
     testApiResponsesFixture.testTokenReset()
 
+
 def testGetProfile(testApiResponsesFixture):
     testApiResponsesFixture.testProfileRequest()
 
+
 def testOptionalParameters(testApiResponsesFixture):
     testApiResponsesFixture.testOptionalParametersRequestResponseCode('investments',
-                                                               '&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
+                                                                      """
+                                                                      &includeInvestmentNotes=false
+                                                                      &includeCommitmentHistory=false
+                                                                      &includeInvestmentLiquidationNotes=false
+                                                                      """)
+
 
 def testProfileIdAsHeader(testApiResponsesFixture):
     testApiResponsesFixture.testProfileIdAsHeaderResponse('LookupValues')
 
+
 endpoints = ['orgs', 'investments', 'portfolios', 'assets', 'LookupData']
+
 
 @pytest.mark.parametrize('endpoint', endpoints)
 def testEndpoints(endpoint, testApiResponsesFixture):
@@ -30,10 +41,12 @@ def testEndpoints(endpoint, testApiResponsesFixture):
     """
     testApiResponsesFixture.testRequestResponseCode(endpoint)
 
+
 @pytest.mark.parametrize('endpoint', endpoints)
 def testDataTransformation(endpoint, testApiResponsesFixture):
     "Test if endpoint returns a flattened dataframe with length > 0"
     testApiResponsesFixture.testDataTransformation(endpoint)
+
 
 # Test token response handling
 validTokenExample = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
@@ -44,15 +57,19 @@ exampleTokenResponse = [
     {'some_other_key': 'data'}
 ]
 
+
 def testTokenResponse():
     assert tokenErrorHandling({'access_token': validTokenExample}) == validTokenExample
+
 
 @pytest.mark.parametrize('tokenResponseJson', exampleTokenResponse)
 def testTokenExceptions(tokenResponseJson):
     with pytest.raises(ApiConnectionError):
         tokenErrorHandling(tokenResponseJson)
 
+
 responseCodes = [400, 401, 404, 500, 503]
+
 
 @pytest.mark.parametrize('responseCode', responseCodes)
 def testResponseErrorHandling(responseCode):
