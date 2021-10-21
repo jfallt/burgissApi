@@ -104,7 +104,7 @@ class tokenAuth(object):
         if analyticsUrlApi is not None:
             self.analyticsUrlApi = analyticsUrlApi
         if assertionType is not None:
-            self.assertionType = assertionType 
+            self.assertionType = assertionType
         if scope is not None:
             self.scope = scope
         logger.info("Client details import complete!")
@@ -242,7 +242,8 @@ class session(init):
         try:
             config.read_file(open('config.cfg'))
             self.profileIdType = config.get('API', 'profileIdType')
-        except:
+        except Exception as e:
+            logging.debug(e)
             if profileIdType is not None:
                 self.profileIdType = profileIdType
         self.session = init(clientId, username, password, urlToken, urlApi, analyticsUrlApi, assertionType, scope)

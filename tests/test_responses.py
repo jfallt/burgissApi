@@ -19,7 +19,7 @@ def testGetProfile(testApiResponsesFixture):
 
 
 def testOptionalParameters(testApiResponsesFixture):
-    testApiResponsesFixture.testOptionalParametersRequestResponseCode('investments','&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
+    testApiResponsesFixture.testOptionalParametersRequestResponseCode('investments', '&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
 
 
 def testProfileIdAsHeader(testApiResponsesFixture):
