@@ -1,8 +1,13 @@
+import codecs
 import configparser
 import datetime
 from datetime import datetime, timedelta
+
 import pytest
-from burgissApiWrapper.burgissApi import tokenAuth, init, session, transformResponse
+from burgissApiWrapper.burgissApi import (init, session, tokenAuth,
+                                          transformResponse)
+from pandas import DataFrame
+
 
 class testApiResponses():
     def __init__(self, clientId=None, username=None, password=None, urlToken=None, urlApi=None, analyticsUrlApi=None, assertionType=None, scope=None) -> None:
@@ -42,7 +47,7 @@ class testApiResponses():
 
     def testDataTransformation(self, endpoint):
         response = self.transformResponse.getData(endpoint)
-        assert isinstance(response, pd.DataFrame) == True
+        assert isinstance(response, DataFrame) == True
         assert len(response) > 0
 
 def pytest_addoption(parser):
@@ -78,7 +83,3 @@ def testApiResponsesFixture(pytestconfig):
     test.burgissSession.profileIdType = pytestconfig.getoption("profileIdType")
 
     return test
-
-@pytest.fixture(scope='session')
-def secret(pytestconfig):
-    return pytestconfig.getoption("secret")
