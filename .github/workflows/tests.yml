@@ -30,6 +30,6 @@ jobs:
         --tokenUrl ${{ secrets.token_url }}
         --apiUrl ${{ secrets.api_url }}
         --apiUrlAnalytics ${{ secrets.api_url_analytics }}
-        --assertionType ${{ secrets.assetion_type }}
+        --assertionType '${{ secrets.assertion_type }}'
         --scope '${{ secrets.scope }}'
         --profileIdType ${{ secrets.profile_id_type }}
