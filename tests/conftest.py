@@ -52,7 +52,10 @@ class testApiResponses():
 
 def pytest_addoption(parser):
     config = configparser.ConfigParser()
-    config.read_file(open('config.cfg'))
+    try:
+        config.read_file(open('config.cfg'))
+    except:
+        config.read_file(open('configTemplate.cfg'))
     parser.addoption("--user", action="store", default=config.get('API', 'user'))
     parser.addoption("--pw", action="store", default=config.get('API', 'pw'))
     parser.addoption("--clientId", action="store", default=config.get('API', 'clientId'))
