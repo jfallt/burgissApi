@@ -3,7 +3,7 @@
 ## Description
 This package simplifies the connection to the Burgiss API and flattens API responses to dataframes.
 
-Built on top of the requests and pandas packages.
+![Tests](https://github.com/jfallt/burgissApi/actions/workflows/tests.yml/badge.svg)
 
 ## Authentication Setup
 The class burgissApiAuth handles all the JWT token authentication but there are a few prerequesite requirements for the authentication.
