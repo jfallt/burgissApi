@@ -1,7 +1,9 @@
 # Burgiss API
 
 ## Description
-This package simplifies the connection to the Burgiss API and is built on top of the requests package
+This package simplifies the connection to the Burgiss API and flattens API responses to dataframes.
+
+![Tests](https://github.com/jfallt/burgissApi/actions/workflows/tests.yml/badge.svg)
 
 ## Authentication Setup
 The class burgissApiAuth handles all the JWT token authentication but there are a few prerequesite requirements for the authentication.
@@ -21,7 +23,8 @@ pip install burgiss-api
 ```
 
 ## Usage
-Data can be updated via the api, to enable this you must change the scope in the config file and specify the request type.
+### Get requests
+Request method defaults to get
 
 ```python
 from burgissApi import burgissApiSession
@@ -38,9 +41,24 @@ lookUpValues = burgissSession.request('LookupValues', profileIdAsHeader=True)
 # Optional Parameters
 investments = burgissSession.request('investments', optionalParameters='&includeInvestmentNotes=false&includeCommitmentHistory=false&includeInvestmentLiquidationNotes=false')
 ```
+### Put requests
+Must add optional parameters for requestType and data
+
+```python
+from burgissApi import burgissApiSession
+
+# Initiate a session and get profile id for subsequent calls (obtains auth token)
+burgissSession = burgissApiSession()
+
+# When creating a put request, all fields must be present
+data = {'someJsonObject':'data'}
+
+# Specify the request type
+orgs = burgissSession.request('some endpoint', requestType='PUT', data=data)
+```
 
 ## Transformed Data Requests
-Some endpoints are supported for transformation to a flattened dataframe instead of a raw json
+Receive a flattened dataframe instead of a raw json from api
 
 ```python
 from burgissApi import burgissApi
@@ -50,21 +68,6 @@ apiSession = burgissApi()
 orgs = apiSession.getData('orgs')
 ```
 
-<details>
-<summary>Supported Endpoints</summary>
-
-|Field|
-| -------|
-|portfolios|
-|orgs|
-|orgs details|
-|investments|
-|investments transactions|
-|LookupData|
-|LookupValues|
-</details>
-
-
 ## Analytics API
 ```python
 from burgissApi import burgissApiSession
@@ -72,7 +75,16 @@ from burgissApi import burgissApiSession
 # Initiate a session and get profile id for subsequent calls (obtains auth token)
 burgissSession = burgissApiSession()
 
+# Get grouping fields
 burgissSession.request('analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
+
+# Specify inputs for point in time analyis
+analysisJson = pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters,
+                                      measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy)
+
+# Send post request to receive data
+burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
+                       profileIdAsHeader=True, requestType='POST', data=analysisJson)
 ```
 
 <details>

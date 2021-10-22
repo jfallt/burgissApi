@@ -1,6 +1,6 @@
 
-from burgissApi.burgissApi import burgissApiSession,  pointInTimeAnalyisInput
-import pytest
+from burgissApi.burgissApi import burgissApiSession
+import json
 
 import os
 os.chdir("..")
@@ -8,9 +8,11 @@ os.chdir("..")
 # Initialize session for subsequent tests
 burgissSession = burgissApiSession()
 
-#===========================#
+# ==========================#
 # BurgissAnalytics requests #
-#===========================#
+# ==========================#
+
+
 def testAnalyticsGroupingFields():
     response = burgissSession.request(
         'analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
@@ -18,13 +20,12 @@ def testAnalyticsGroupingFields():
 
 
 analysisParameters = {
-    'userDefinedAnalysisName': 'Adjusted Ending Value',
+    'userDefinedAnalysisName': 'Dingus',
     'userDefinedAnalysisID': '1',
-    'analysisResultType': 'Pooled',
-    'calculationContext': 'default_value3',
-    'analysisCurrency': 'local',
-    'analysisStartDate': 'default_value3',
-    'analysisEndDate': 'default_value3'
+    'calculationContext': 'Investment',
+    'analysisResultType': 'individual',
+    'analysisCurrency': 'Base',  # 'analysisStartDate': '2021-09-15T15:29:57.352Z',
+    # 'analysisEndDate': '2021-09-15T15:29:57.352Z'
 }
 
 globalMeasureParameters = {
@@ -46,30 +47,73 @@ measureEndDateReference = {
     "referenceDate": "Inception"
 }
 
-measures = {"rollForward": False,
-            "userDefinedMeasureAlias": "string",
-            "measureName": "IRR",
-            "measureStartDate": "2021-09-15T15:29:57.352Z",
-            "measureEndDate": "2021-09-15T15:29:57.352Z",
-            "indexID": "string",
-            "indexPremium": 0,
-            "decimalPrecision": 0
-            }
+# measureStartDateReference = None
+# measureEndDateReference = None
+
+measures = {  # "rollForward": False,
+    # "userDefinedMeasureAlias": "string",
+    "measureName": "Valuation"
+    # "measureStartDate": "2021-09-15T15:29:57.352Z",
+    # "measureEndDate": "2021-09-15T15:29:57.352Z",
+    # "indexID": "string",
+    # "indexPremium": 0,
+    # "decimalPrecision": 0
+}
 
 
-dataCriteria = {"recordID": "string",
-                "RecordGUID": "string",
-                "recordContext": "investment",
-                "selectionSet": "string",
+dataCriteria = {"recordID": "9991",
+                # "RecordGUID": "string",
+                "recordContext": "Portfolio",
+                # "selectionSet": "string",
                 "excludeLiquidatedInvestments": False}
 
-groupBy = ['Investment.Name']
+# groupBy = ['Investment.Name']
+groupBy = None
 
-analysisJson = pointInTimeAnalyisInput(analysisParameters, globalMeasureParameters,
-                                      measures, measureStartDateReference, measureEndDateReference, dataCriteria, groupBy)
+# analysisJson, analysisJson2 = pointInTimeAnalyisInput(
+# analysisParameters,
+# globalMeasureParameters,
+# measures,
+# measureStartDateReference,
+# measureEndDateReference,
+# dataCriteria,
+# groupBy
+# )
+
+analysisJson = {
+    "pointInTimeAnalysis": [
+        {
+            "userDefinedAnalysisName": "NAVreport",
+            "userDefinedAnalysisID": "NAVreport-001",
+            "calculationContext": "Investment",
+            "analysisResultType": "individual",
+            "analysisCurrency": "Base",
+            "globalMeasureProperties": {
+                "rollForward": True
+            },
+            "measures": [
+                {
+                    "measureName": "Valuation"
+
+                }
+
+            ]
+        }
+    ],
+    "dataCriteria": [
+        {
+            "recordID": "9991",
+            "recordContext": "portfolio"
+
+        }
+    ]
+}
+print(json.dumps(analysisJson))
 
 burgissSession = burgissApiSession()
 burgissSession.request('analyticsGroupingFields',
                        analyticsApi=True, profileIdAsHeader=True)
-burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
-                       profileIdAsHeader=True, requestType='POST', data=analysisJson)
+boi = burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
+                             profileIdAsHeader=True, requestType='POST', data=json.dumps(analysisJson))
+
+print(boi)

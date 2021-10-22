@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os}}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.9']
+  
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+        echo '${{ secrets.private }}' > private.pem
+    - name: Test with tox
+      run: >
+        tox  -- -x --user ${{ secrets.user }}
+        --pw ${{ secrets.pw }}
+        --clientId ${{ secrets.client_id }}
+        --tokenUrl ${{ secrets.token_url }}
+        --apiUrl ${{ secrets.api_url }}
+        --apiUrlAnalytics ${{ secrets.api_url_analytics }}
+        --assertionType '${{ secrets.assertion_type }}'
+        --scope '${{ secrets.scope }}'
+        --profileIdType ${{ secrets.profile_id_type }}
