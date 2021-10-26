@@ -20,6 +20,28 @@ The class burgissApiAuth handles all the JWT token authentication but there are 
 ```
 pip install -r requirements.txt 
 pip install burgiss-api
+
+## Project Structure
+```
+├── config.cfg
+├── configTemplate.cfg
+├── pyproject.toml
+├── ReadMe.md          
+├── requirements.txt        <- The requirements file for reproducing the package environment
+├── requirementsDev.txt     <- The requirements file for reproducing the testing environment
+├── setup.cfg
+├── setup.py
+├── tox.ini
+│
+├── tests
+│   ├── conftest.py         <- Intermediate data that has been 
+│   └── burgissApi.py
+│
+└── src                     <- Source code for use in this project.
+    │
+    └── burgissApiWrapper   <- Scripts to download or generate data
+        └── burgissApi.py
+
 ```
 
 ## Usage
@@ -27,10 +49,10 @@ pip install burgiss-api
 Request method defaults to get
 
 ```python
-from burgissApi import burgissApiSession
+from burgissApiWrapper.burgissApi import session
 
 # Initiate a session and get profile id for subsequent calls (obtains auth token)
-burgissSession = burgissApiSession()
+burgissSession = session()
 
 # Basic Request Syntax (Defaults to get)
 orgs = burgissSession.request('orgs')
@@ -45,10 +67,10 @@ investments = burgissSession.request('investments', optionalParameters='&include
 Must add optional parameters for requestType and data
 
 ```python
-from burgissApi import burgissApiSession
+from burgissApiWrapper.burgissApi import session
 
 # Initiate a session and get profile id for subsequent calls (obtains auth token)
-burgissSession = burgissApiSession()
+burgissSession = session()
 
 # When creating a put request, all fields must be present
 data = {'someJsonObject':'data'}
@@ -61,10 +83,10 @@ orgs = burgissSession.request('some endpoint', requestType='PUT', data=data)
 Receive a flattened dataframe instead of a raw json from api
 
 ```python
-from burgissApi import burgissApi
+from burgissApiWrapper.burgissApi import transformResponse
 
 # Very similar syntax to above
-apiSession = burgissApi()
+apiSession = transformResponse()
 orgs = apiSession.getData('orgs')
 ```
 
