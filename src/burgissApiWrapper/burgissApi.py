@@ -3,6 +3,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
+import json
 import jwt
 import pandas as pd
 import requests
@@ -379,7 +380,13 @@ class transformResponse(session):
         flatDf = self.flattenResponse(resp, field)
         cleanFlatDf = self.columnNameClean(flatDf)
 
-        return cleanFlatDf
+        if 'includeCommitmentHistory=true' in OptionalParameters:
+            cleanFlatDf.commitmentHistory = cleanFlatDf.commitmentHistory.apply(lambda x: x[0])
+            cleanFlatDf = cleanFlatDf[['investmentID','commitmentHistory']].to_json(orient='records') 
+            commitmentHistory = self.columnNameClean(pd.json_normalize(json.loads(cleanFlatDf)))
+            return commitmentHistory
+        else:
+            return cleanFlatDf
 
     def getTransactions(self, id: int, field: str):
         """
