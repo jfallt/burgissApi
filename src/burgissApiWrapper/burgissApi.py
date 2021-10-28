@@ -11,8 +11,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from OpenSSL import crypto
 
+logger = logging.getLogger()
 # Create and configure logger
-logging.basicConfig(filename="burgissApiWrapper.log",
+""" logging.basicConfig(filename="burgissApiWrapper.log",
                     format='%(asctime)s %(message)s',
                     filemode='w')
 
@@ -20,7 +21,7 @@ logging.basicConfig(filename="burgissApiWrapper.log",
 logger = logging.getLogger()
 
 # Setting the threshold of logger to DEBUG
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG) """
 
 
 class ApiConnectionError(Exception):
