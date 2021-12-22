@@ -383,7 +383,7 @@ class transformResponse(session):
 
         if 'includeCommitmentHistory=true' in OptionalParameters:
             cleanFlatDf.commitmentHistory = cleanFlatDf.commitmentHistory.apply(lambda x: x[0])
-            cleanFlatDf = cleanFlatDf[['investmentID','commitmentHistory']].to_json(orient='records') 
+            cleanFlatDf = cleanFlatDf[['investmentID', 'commitmentHistory']].to_json(orient='records')
             commitmentHistory = self.columnNameClean(pd.json_normalize(json.loads(cleanFlatDf)))
             return commitmentHistory
         else:
