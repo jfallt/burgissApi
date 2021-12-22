@@ -33,7 +33,7 @@ def responseCodeHandling(response):
     """
     Handle request responses and log if there are errors
     """
-    knownResponseCodes = {400: 'Unauthorized', 401: 'Forbidden', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable'}
+    knownResponseCodes = {400: 'Unauthorized', 403: 'Forbidden', 401: 'Unauthorized', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable'}
     if response.status_code == 200:
         return response
     elif response.status_code in knownResponseCodes.keys():
