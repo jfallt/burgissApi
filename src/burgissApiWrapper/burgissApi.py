@@ -3,6 +3,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
+import json
 import jwt
 import pandas as pd
 import requests
@@ -10,8 +11,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from OpenSSL import crypto
 
+logger = logging.getLogger()
 # Create and configure logger
-logging.basicConfig(filename="burgissApiWrapper.log",
+""" logging.basicConfig(filename="burgissApiWrapper.log",
                     format='%(asctime)s %(message)s',
                     filemode='w')
 
@@ -19,7 +21,7 @@ logging.basicConfig(filename="burgissApiWrapper.log",
 logger = logging.getLogger()
 
 # Setting the threshold of logger to DEBUG
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG) """
 
 
 class ApiConnectionError(Exception):
@@ -31,7 +33,7 @@ def responseCodeHandling(response):
     """
     Handle request responses and log if there are errors
     """
-    knownResponseCodes = {400: 'Unauthorized', 401: 'Forbidden', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable'}
+    knownResponseCodes = {400: 'Unauthorized', 403: 'Forbidden', 401: 'Unauthorized', 404: 'Not Found', 500: 'Internal Server Error', 503: 'Service Unavailable'}
     if response.status_code == 200:
         return response
     elif response.status_code in knownResponseCodes.keys():
@@ -379,7 +381,13 @@ class transformResponse(session):
         flatDf = self.flattenResponse(resp, field)
         cleanFlatDf = self.columnNameClean(flatDf)
 
-        return cleanFlatDf
+        if 'includeCommitmentHistory=true' in OptionalParameters:
+            cleanFlatDf.commitmentHistory = cleanFlatDf.commitmentHistory.apply(lambda x: x[0])
+            cleanFlatDf = cleanFlatDf[['investmentID', 'commitmentHistory']].to_json(orient='records')
+            commitmentHistory = self.columnNameClean(pd.json_normalize(json.loads(cleanFlatDf)))
+            return commitmentHistory
+        else:
+            return cleanFlatDf
 
     def getTransactions(self, id: int, field: str):
         """

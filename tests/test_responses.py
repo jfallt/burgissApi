@@ -72,7 +72,7 @@ def testTokenExceptions(tokenResponseJson):
         tokenErrorHandling(tokenResponseJson)
 
 
-responseCodes = [400, 401, 404, 500, 503]
+responseCodes = [400, 401, 403, 404, 500, 503, 1000]
 
 
 @pytest.mark.parametrize('responseCode', responseCodes)

@@ -1,12 +1,9 @@
 
-from burgissApi.burgissApi import burgissApiSession
+from burgissApiWrapper.burgissApi import session
 import json
 
-import os
-os.chdir("..")
-
 # Initialize session for subsequent tests
-burgissSession = burgissApiSession()
+burgissSession = session()
 
 # ==========================#
 # BurgissAnalytics requests #
@@ -110,7 +107,7 @@ analysisJson = {
 }
 print(json.dumps(analysisJson))
 
-burgissSession = burgissApiSession()
+burgissSession = session()
 burgissSession.request('analyticsGroupingFields',
                        analyticsApi=True, profileIdAsHeader=True)
 boi = burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
