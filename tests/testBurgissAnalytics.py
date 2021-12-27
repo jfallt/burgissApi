@@ -10,10 +10,10 @@ burgissSession = session()
 # ==========================#
 
 
-""" def testAnalyticsGroupingFields():
+def testAnalyticsGroupingFields():
     response = burgissSession.request(
         'analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
-    assert response.status_code == 200 
+    assert response.status_code == 200
 
 
 analysisParameters = {
@@ -114,4 +114,3 @@ boi = burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
                              profileIdAsHeader=True, requestType='POST', data=json.dumps(analysisJson))
 
 print(boi)
-"""
