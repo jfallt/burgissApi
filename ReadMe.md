@@ -23,9 +23,9 @@ pip install burgiss-api
 
 ## Project Structure
 ```
-├── config.cfg
-├── configTemplate.cfg
-├── pyproject.toml
+├── config.cfg              <- Config file to run api calls (not included in repo)
+├── configTemplate.cfg      <- Config template file to run api calls
+├── pyproject.toml          
 ├── ReadMe.md          
 ├── requirements.txt        <- The requirements file for reproducing the package environment
 ├── requirementsDev.txt     <- The requirements file for reproducing the testing environment
@@ -35,12 +35,13 @@ pip install burgiss-api
 │
 ├── tests
 │   ├── conftest.py         <- Intermediate data that has been 
-│   └── burgissApi.py
+|   ├── test_burgissAnalytics.py
+│   └── test_responses.py   <- tests for JWT auth, responses and response transformation
 │
 └── src                     <- Source code for use in this project.
     │
     └── burgissApiWrapper   <- Scripts to download or generate data
-        └── burgissApi.py
+        └── burgissApi.py   <- Classes for JWT auth, request package wrapping and response trans
 
 ```
 
@@ -91,6 +92,8 @@ orgs = apiSession.getData('orgs')
 ```
 
 ## Analytics API
+:x: Current package does not support this feature but it is a planned addition
+
 ```python
 from burgissApi import burgissApiSession
 
