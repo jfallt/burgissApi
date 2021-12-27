@@ -1,22 +1,19 @@
 
-from burgissApi.burgissApi import burgissApiSession
+from burgissApiWrapper.burgissApi import session
 import json
 
-import os
-os.chdir("..")
-
 # Initialize session for subsequent tests
-burgissSession = burgissApiSession()
+burgissSession = session()
 
 # ==========================#
 # BurgissAnalytics requests #
 # ==========================#
 
 
-def testAnalyticsGroupingFields():
+""" def testAnalyticsGroupingFields():
     response = burgissSession.request(
         'analyticsGroupingFields', analyticsApi=True, profileIdAsHeader=True)
-    assert response.status_code == 200
+    assert response.status_code == 200 
 
 
 analysisParameters = {
@@ -110,10 +107,11 @@ analysisJson = {
 }
 print(json.dumps(analysisJson))
 
-burgissSession = burgissApiSession()
+burgissSession = session()
 burgissSession.request('analyticsGroupingFields',
                        analyticsApi=True, profileIdAsHeader=True)
 boi = burgissSession.request('pointinTimeAnalysis', analyticsApi=True,
                              profileIdAsHeader=True, requestType='POST', data=json.dumps(analysisJson))
 
 print(boi)
+"""
