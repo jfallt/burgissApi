@@ -7,7 +7,7 @@ backports.entry-points-selectable==1.1.0
 bleach==4.1.0
 -e git+https://github.com/jfallt/burgissApi.git@a5cefcd8cc4cadb84f7df1f773fff4e44119d81a#egg=burgiss_api
 cachetools==4.2.4
-certifi==2021.5.30
+certifi==2022.12.7
 cffi==1.14.6
 chardet==4.0.0
 charset-normalizer==2.0.4
