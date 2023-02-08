@@ -13,7 +13,7 @@ chardet==4.0.0
 charset-normalizer==2.0.4
 colorama==0.4.4
 coverage==6.0.2
-cryptography==3.4.8
+cryptography==39.0.1
 distlib==0.3.3
 docutils==0.17.1
 et-xmlfile==1.1.0
