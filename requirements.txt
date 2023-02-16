@@ -118,5 +118,5 @@ update==0.0.1
 urllib3==1.26.6
 virtualenv==20.8.1
 webencodings==0.5.1
-Werkzeug==2.0.2
+Werkzeug==2.2.3
 zipp==3.5.0
